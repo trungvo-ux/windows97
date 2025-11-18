@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: process.env.GITHUB_ACTIONS ? "/windows97/" : "/",
+  base: process.env.GITHUB_ACTIONS === "true" ? "/windows97/" : "/",
   server: {
     port: process.env.PORT ? Number(process.env.PORT) : 5173,
     cors: { origin: ["*"] },
