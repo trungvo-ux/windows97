@@ -4,6 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import vercel from "vite-plugin-vercel";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { manifestBasePath } from "./vite-plugin-manifest-base";
 
 // Polyfill __dirname in ESM context (Node >=16)
 const __filename = fileURLToPath(import.meta.url);
@@ -19,7 +20,7 @@ export default defineConfig({
       ignored: ["**/.terminals/**"],
     },
   },
-  plugins: [react(), tailwindcss(), vercel()],
+  plugins: [react(), tailwindcss(), vercel(), manifestBasePath()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
