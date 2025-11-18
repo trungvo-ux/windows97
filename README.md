@@ -1,4 +1,4 @@
-# ryOS — A web-based agentic AI OS, made with Cursor
+# TrungVOs — A web-based agentic AI OS, made with Cursor
 
 A modern web-based desktop environment inspired by classic macOS, built with a cutting-edge web stack and AI.
 Features multiple built-in applications, a familiar desktop interface, and a system context-aware AI agent.
@@ -89,7 +89,7 @@ Works on all devices—including mobile, tablet, and desktop.
   - Text-to-speech for AI responses with word highlighting
   - Control apps and edit documents via chat commands
   - Nudge system (👋) with context-aware responses
-  - ryOS FM DJ mode - when music plays, Ryo becomes a radio DJ
+  - TrungVOs FM DJ mode - when music plays, Ryo becomes a radio DJ
   - Tool calling capabilities for system integration
   - Save transcript to Markdown
   - Speech synthesis with volume controls
@@ -136,7 +136,7 @@ Works on all devices—including mobile, tablet, and desktop.
   - Applet authentication bridge for secure API access
   - Custom window sizes per applet
   - Integration with Finder for file management
-  - Create applets via ryOS Chat AI assistant
+  - Create applets via TrungVOs Chat AI assistant
 
 ## Project Structure
 

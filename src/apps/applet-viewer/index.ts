@@ -9,13 +9,13 @@ export const helpItems = [
   },
   {
     icon: "💬",
-    title: "Create with ryOS Chat",
-    description: "Ask ryOS Chat to create custom apps and applets for you. Share your ideas and get working apps instantly.",
+    title: "Create with TrungVOs Chat",
+    description: "Ask TrungVOs Chat to create custom apps and applets for you. Share your ideas and get working apps instantly.",
   },
   {
     icon: "📄",
     title: "View Applets",
-    description: "Open and run applets saved from ryOS Chat or downloaded from the store.",
+    description: "Open and run applets saved from TrungVOs Chat or downloaded from the store.",
   },
   {
     icon: "📤",

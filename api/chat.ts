@@ -685,7 +685,7 @@ export default async function handler(req: Request) {
       tools: {
         launchApp: {
           description:
-            "Launch an application in the ryOS interface when the user explicitly requests it. If the id is 'internet-explorer', you must provide BOTH a real 'url' and a 'year' for time-travel; otherwise provide neither.",
+            "Launch an application in the TrungVOs interface when the user explicitly requests it. If the id is 'internet-explorer', you must provide BOTH a real 'url' and a 'year' for time-travel; otherwise provide neither.",
           inputSchema: z
             .object({
               id: z.enum(appIds).describe("The app id to launch"),
@@ -758,14 +758,14 @@ export default async function handler(req: Request) {
         },
         closeApp: {
           description:
-            "Close an application in the ryOS interface—but only when the user explicitly asks you to close that specific app.",
+            "Close an application in the TrungVOs interface—but only when the user explicitly asks you to close that specific app.",
           inputSchema: z.object({
             id: z.enum(appIds).describe("The app id to close"),
           }),
         },
         switchTheme: {
           description:
-            "Switch the ryOS UI theme to a specific OS style when the user explicitly requests it.",
+            "Switch the TrungVOs UI theme to a specific OS style when the user explicitly requests it.",
           inputSchema: z.object({
             theme: z
               .enum(themeIds)
@@ -941,7 +941,7 @@ export default async function handler(req: Request) {
         // --- HTML generation & preview ---
         generateHtml: {
           description:
-            "Generate an HTML snippet for an ryOS Applet: a small windowed app (default ~320px wide) that runs inside ryOS, not the full page. Design mobile-first for ~320px width but keep layouts responsive to expand gracefully. Provide markup in 'html', a short 'title', and an 'icon' (emoji). DO NOT wrap it in markdown fences; the client will handle scaffolding.",
+            "Generate an HTML snippet for an TrungVOs Applet: a small windowed app (default ~320px wide) that runs inside TrungVOs, not the full page. Design mobile-first for ~320px width but keep layouts responsive to expand gracefully. Provide markup in 'html', a short 'title', and an 'icon' (emoji). DO NOT wrap it in markdown fences; the client will handle scaffolding.",
           inputSchema: z.object({
             html: z
               .string()

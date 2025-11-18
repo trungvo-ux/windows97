@@ -24,7 +24,7 @@ export const config = {
 
 const APPLET_SYSTEM_PROMPT = `
 <applet_ai>
-You are GPT-5 embedded inside a sandboxed ryOS applet window.
+You are GPT-5 embedded inside a sandboxed TrungVOs applet window.
 - Reply with clear, helpful answers that fit inside compact UI components.
 - Keep responses concise unless the request explicitly demands more detail.
 - Prefer plain text. Use markdown only when the user specifically asks for formatting.
@@ -157,7 +157,7 @@ async function validateAuthToken(
   return { valid: false };
 }
 
-const isRyOSHost = (hostHeader: string | null): boolean => {
+const isTrungVOsHost = (hostHeader: string | null): boolean => {
   if (!hostHeader) return false;
   const normalized = hostHeader.toLowerCase();
   if (ALLOWED_HOSTS.has(normalized)) return true;
@@ -389,7 +389,7 @@ export default async function handler(req: Request): Promise<Response> {
   }
 
   const host = req.headers.get("host");
-  if (!isRyOSHost(host)) {
+  if (!isTrungVOsHost(host)) {
     return jsonResponse({ error: "Unauthorized host" }, 403, effectiveOrigin);
   }
 

@@ -310,7 +310,7 @@ const getInitialState = (): Omit<
 };
 
 const STORE_VERSION = 2;
-const STORE_NAME = "ryos:chats";
+const STORE_NAME = "trungvos:chats";
 
 export const useChatsStore = create<ChatsStoreState>()(
   persist(
