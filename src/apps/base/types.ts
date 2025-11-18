@@ -29,6 +29,7 @@ export interface BaseApp<TInitialData = unknown> {
     | "textedit"
     | "control-panels"
     | "minesweeper"
+    | "blackjack"
     | "finder"
     | "paint"
     | "videos"

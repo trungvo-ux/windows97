@@ -506,6 +506,7 @@ export function Desktop({
       "paint",
       "soundboard",
       "minesweeper",
+      "blackjack",
       "synth",
       "terminal",
       "pc",

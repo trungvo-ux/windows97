@@ -3,6 +3,7 @@ import { InternetExplorerApp } from "@/apps/internet-explorer";
 import { ChatsApp } from "@/apps/chats";
 import ControlPanelsApp from "@/apps/control-panels";
 import { MinesweeperApp } from "@/apps/minesweeper";
+import { BlackjackApp } from "@/apps/blackjack";
 import { SoundboardApp } from "@/apps/soundboard";
 import { FinderApp } from "@/apps/finder";
 import { PaintApp } from "@/apps/paint";
@@ -103,6 +104,14 @@ export const appRegistry = {
       defaultSize: { width: 305, height: 400 },
       minSize: { width: 305, height: 400 },
       maxSize: { width: 305, height: 400 },
+    } as WindowConstraints,
+  },
+  [BlackjackApp.id]: {
+    ...BlackjackApp,
+    windowConfig: {
+      defaultSize: { width: 600, height: 650 },
+      minSize: { width: 500, height: 550 },
+      maxSize: { width: 700, height: 750 },
     } as WindowConstraints,
   },
   [VideosApp.id]: {
