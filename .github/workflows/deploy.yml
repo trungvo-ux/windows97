@@ -31,6 +31,8 @@ jobs:
         run: bun install
 
       - name: Build
+        env:
+          GITHUB_ACTIONS: "true"
         run: bun run build
 
       - name: Setup Pages
