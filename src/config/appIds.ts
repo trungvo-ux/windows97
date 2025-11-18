@@ -7,6 +7,7 @@ export const appIds = [
   "paint",
   "photo-booth",
   "minesweeper",
+  "blackjack",
   "videos",
   "ipod",
   "synth",
