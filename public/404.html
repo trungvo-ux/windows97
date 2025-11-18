@@ -3,28 +3,32 @@
   <head>
     <meta charset="utf-8" />
     <title>Redirecting…</title>
-    <meta http-equiv="refresh" content="0; url=/" />
+    <meta http-equiv="refresh" content="0; url=/windows97/" />
     <meta name="robots" content="noindex" />
-    <link rel="canonical" href="/" />
+    <link rel="canonical" href="/windows97/" />
     <script>
       (function () {
-        var target = '/';
+        var target = '/windows97/';
         try {
           if (window && window.location && window.location.origin) {
-            target = window.location.origin + '/';
+            target = window.location.origin + '/windows97/';
           }
         } catch (e) {}
         window.location.replace(target);
       })();
     </script>
     <style>
-      html, body { height: 100%; margin: 0; }
-      body { display: flex; align-items: center; justify-content: center; font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
-      a { color: inherit; }
+      body {
+        font-family: system-ui, sans-serif;
+        max-width: 420px;
+        margin: 0 auto;
+        padding: 2rem;
+        text-align: center;
+      }
     </style>
   </head>
   <body>
-    <p>Redirecting to <a href="/">/</a>…</p>
+    <h1>Redirecting…</h1>
+    <p><a href="/windows97/">Click here if you are not redirected.</a></p>
   </body>
-  </html>
-
+</html>
