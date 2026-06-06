@@ -54,7 +54,7 @@ function iframeCheckDevApi(): PluginOption {
           });
 
           const { default: handler } = (await server.ssrLoadModule(
-            "/api/iframe-check.ts"
+            "/_api/iframe-check.ts"
           )) as { default: IframeCheckHandler };
           const response = await handler(
             new Request(requestUrl, {
