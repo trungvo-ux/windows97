@@ -1,3 +1,4 @@
+/// <reference path="./_rate-limit.d.ts" />
 import { Redis } from "@upstash/redis";
 
 // Set up Redis client
