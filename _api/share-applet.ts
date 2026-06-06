@@ -3,7 +3,7 @@ import {
   getEffectiveOrigin,
   isAllowedOrigin,
   preflightIfNeeded,
-} from "./utils/cors.js";
+} from "./utils/_cors.js";
 import { z } from "zod";
 
 // Vercel Edge Function configuration

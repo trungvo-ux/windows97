@@ -6,7 +6,7 @@ import {
   getEffectiveOrigin,
   isAllowedOrigin,
   preflightIfNeeded,
-} from "./utils/cors.js";
+} from "./utils/_cors.js";
 
 export const config = {
   runtime: "edge",

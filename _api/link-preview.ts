@@ -2,8 +2,8 @@ export const config = {
   runtime: "edge",
 };
 
-import * as RateLimit from "./utils/rate-limit.js";
-import { getEffectiveOrigin, isAllowedOrigin, preflightIfNeeded } from "./utils/cors.js";
+import * as RateLimit from "./utils/_rate-limit.js";
+import { getEffectiveOrigin, isAllowedOrigin, preflightIfNeeded } from "./utils/_cors.js";
 interface LinkMetadata {
   title?: string;
   description?: string;

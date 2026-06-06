@@ -1,12 +1,12 @@
 import { openai } from "@ai-sdk/openai";
 import { generateObject } from "ai";
 import { z } from "zod";
-import * as RateLimit from "./utils/rate-limit.js";
+import * as RateLimit from "./utils/_rate-limit.js";
 import {
   getEffectiveOrigin,
   isAllowedOrigin,
   preflightIfNeeded,
-} from "./utils/cors.js";
+} from "./utils/_cors.js";
 
 export const config = {
   runtime: "edge",
