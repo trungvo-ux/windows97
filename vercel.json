@@ -1,12 +1,13 @@
 {
   "devCommand": "bun run dev",
+  "cleanUrls": false,
   "headers": [
     {
       "source": "/api/(.*)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
-          "value": "https://os.ryo.lu http://localhost:3000"
+          "value": "https://os.ryo.lu http://localhost:3000 https://windows97.vercel.app https://trungvo-ux.github.io"
         }
       ]
     },

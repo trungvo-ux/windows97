@@ -1,11 +1,29 @@
 /// <reference path="./_rate-limit.d.ts" />
 import { Redis } from "@upstash/redis";
 
-// Set up Redis client
-const redis = new Redis({
-  url: process.env.REDIS_KV_REST_API_URL,
-  token: process.env.REDIS_KV_REST_API_TOKEN,
-});
+function isRedisConfigured() {
+  const url = process.env.REDIS_KV_REST_API_URL;
+  const token = process.env.REDIS_KV_REST_API_TOKEN;
+  return Boolean(
+    url &&
+      token &&
+      typeof url === "string" &&
+      (url.startsWith("https://") || url.startsWith("http://"))
+  );
+}
+
+let redisClient = null;
+
+function getRedis() {
+  if (!isRedisConfigured()) return null;
+  if (!redisClient) {
+    redisClient = new Redis({
+      url: process.env.REDIS_KV_REST_API_URL,
+      token: process.env.REDIS_KV_REST_API_TOKEN,
+    });
+  }
+  return redisClient;
+}
 
 // Constants for rate limiting
 const AI_RATE_LIMIT_PREFIX = "rl:ai:";
@@ -26,6 +44,11 @@ async function checkAndIncrementAIMessageCount(
   isAuthenticated,
   authToken = null
 ) {
+  const redis = getRedis();
+  if (!redis) {
+    return { allowed: true, count: 0, limit: AI_LIMIT_ANON_PER_5_HOURS };
+  }
+
   const key = getAIRateLimitKey(identifier);
   const currentCount = await redis.get(key);
   const count = currentCount ? parseInt(currentCount) : 0;
@@ -100,14 +123,20 @@ export {
  * Increment a counter under a key with a TTL window and enforce a limit.
  * Returns details including remaining and reset seconds.
  */
-function isRedisConfigured() {
-  return Boolean(
-    process.env.REDIS_KV_REST_API_URL && process.env.REDIS_KV_REST_API_TOKEN
-  );
-}
-
 async function checkCounterLimit({ key, windowSeconds, limit }) {
   if (!isRedisConfigured()) {
+    return {
+      allowed: true,
+      count: 0,
+      limit,
+      remaining: limit,
+      windowSeconds,
+      resetSeconds: windowSeconds,
+    };
+  }
+
+  const redis = getRedis();
+  if (!redis) {
     return {
       allowed: true,
       count: 0,

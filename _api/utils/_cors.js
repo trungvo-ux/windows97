@@ -5,6 +5,8 @@ export const ALLOWED_ORIGINS = new Set([
   "https://ryo.lu",
   "http://localhost:3000",
   "http://localhost:5173",
+  "https://windows97.vercel.app",
+  "https://trungvo-ux.github.io",
 ]);
 
 export function getEffectiveOrigin(req) {
@@ -12,8 +14,13 @@ export function getEffectiveOrigin(req) {
     const origin = req.headers.get("origin");
     if (origin) return origin;
     const referer = req.headers.get("referer");
-    if (!referer) return null;
-    return new URL(referer).origin;
+    if (referer) return new URL(referer).origin;
+    const host = req.headers.get("host");
+    if (host) {
+      const proto = host.includes("localhost") ? "http" : "https";
+      return `${proto}://${host}`;
+    }
+    return null;
   } catch {
     return null;
   }
@@ -27,6 +34,10 @@ export function isAllowedOrigin(origin) {
   try {
     const url = new URL(origin);
     if (url.hostname === "localhost" || url.hostname === "127.0.0.1") {
+      return true;
+    }
+    // Vercel preview/production deploys for this project
+    if (url.hostname.endsWith(".vercel.app")) {
       return true;
     }
   } catch {
