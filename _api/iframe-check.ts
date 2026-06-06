@@ -4,10 +4,6 @@ import { Redis } from "@upstash/redis"; // Use direct import
 import * as RateLimit from "./utils/_rate-limit.js";
 import { getEffectiveOrigin, isAllowedOrigin } from "./utils/_cors.js";
 
-export const config = {
-  runtime: "edge",
-};
-
 import { normalizeUrlForCacheKey } from "./utils/_url.js"; // Import the function
 
 // --- Logging Utilities ---------------------------------------------------
@@ -146,9 +142,14 @@ const memoryWaybackCache = new Map<
 >();
 
 function isRedisConfigured(): boolean {
-  return Boolean(
-    process.env.REDIS_KV_REST_API_URL && process.env.REDIS_KV_REST_API_TOKEN
-  );
+  const url = process.env.REDIS_KV_REST_API_URL;
+  const token = process.env.REDIS_KV_REST_API_TOKEN;
+  if (!url || !token) return false;
+  if (!url.startsWith("https://") && !url.startsWith("http://")) return false;
+  if (url.includes("YOUR_") || url.includes("placeholder") || token.includes("YOUR_")) {
+    return false;
+  }
+  return true;
 }
 
 function getRedisClient(): Redis | null {

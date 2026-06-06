@@ -5,7 +5,7 @@ export type LocalIePage = {
 };
 
 const TRUNG_ABOUT: LocalIePage = {
-  path: "/pages/trung-vo-about.html",
+  path: "/pages/trung-vo-about",
   title: "Trung Vo — About Me",
   displayUrl: "trungvo.xyz",
 };
@@ -46,7 +46,13 @@ export function resolveLocalPage(url: string): LocalIePage | null {
   if (!trimmed) return null;
 
   if (trimmed.startsWith("/pages/")) {
-    if (trimmed === TRUNG_ABOUT.path) return TRUNG_ABOUT;
+    if (
+      trimmed === TRUNG_ABOUT.path ||
+      trimmed === `${TRUNG_ABOUT.path}/` ||
+      trimmed === `${TRUNG_ABOUT.path}.html`
+    ) {
+      return TRUNG_ABOUT;
+    }
     return null;
   }
 

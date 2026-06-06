@@ -1,15 +1,19 @@
-/// <reference path="./_rate-limit.d.ts" />
 import { Redis } from "@upstash/redis";
 
 function isRedisConfigured() {
   const url = process.env.REDIS_KV_REST_API_URL;
   const token = process.env.REDIS_KV_REST_API_TOKEN;
-  return Boolean(
-    url &&
-      token &&
-      typeof url === "string" &&
-      (url.startsWith("https://") || url.startsWith("http://"))
-  );
+  if (!url || !token || typeof url !== "string" || typeof token !== "string") {
+    return false;
+  }
+  if (!url.startsWith("https://") && !url.startsWith("http://")) {
+    return false;
+  }
+  // Ignore placeholder / invalid Upstash URLs that would crash at runtime
+  if (url.includes("YOUR_") || url.includes("placeholder") || token.includes("YOUR_")) {
+    return false;
+  }
+  return true;
 }
 
 let redisClient = null;
@@ -124,67 +128,66 @@ export {
  * Returns details including remaining and reset seconds.
  */
 async function checkCounterLimit({ key, windowSeconds, limit }) {
-  if (!isRedisConfigured()) {
-    return {
-      allowed: true,
-      count: 0,
-      limit,
-      remaining: limit,
-      windowSeconds,
-      resetSeconds: windowSeconds,
-    };
-  }
-
-  const redis = getRedis();
-  if (!redis) {
-    return {
-      allowed: true,
-      count: 0,
-      limit,
-      remaining: limit,
-      windowSeconds,
-      resetSeconds: windowSeconds,
-    };
-  }
-
-  const current = await redis.get(key);
-
-  if (!current) {
-    await redis.set(key, 1, { ex: windowSeconds });
-    const ttl = await redis.ttl(key);
-    return {
-      allowed: true,
-      count: 1,
-      limit,
-      remaining: Math.max(0, limit - 1),
-      windowSeconds,
-      resetSeconds: typeof ttl === "number" && ttl > 0 ? ttl : windowSeconds,
-    };
-  }
-
-  const count = parseInt(current);
-  if (count >= limit) {
-    const ttl = await redis.ttl(key);
-    return {
-      allowed: false,
-      count,
-      limit,
-      remaining: 0,
-      windowSeconds,
-      resetSeconds: typeof ttl === "number" && ttl > 0 ? ttl : windowSeconds,
-    };
-  }
-
-  const newCount = await redis.incr(key);
-  const ttl = await redis.ttl(key);
-  return {
+  const fallback = {
     allowed: true,
-    count: newCount,
+    count: 0,
     limit,
-    remaining: Math.max(0, limit - newCount),
+    remaining: limit,
     windowSeconds,
-    resetSeconds: typeof ttl === "number" && ttl > 0 ? ttl : windowSeconds,
+    resetSeconds: windowSeconds,
   };
+
+  if (!isRedisConfigured()) {
+    return fallback;
+  }
+
+  try {
+    const redis = getRedis();
+    if (!redis) {
+      return fallback;
+    }
+
+    const current = await redis.get(key);
+
+    if (!current) {
+      await redis.set(key, 1, { ex: windowSeconds });
+      const ttl = await redis.ttl(key);
+      return {
+        allowed: true,
+        count: 1,
+        limit,
+        remaining: Math.max(0, limit - 1),
+        windowSeconds,
+        resetSeconds: typeof ttl === "number" && ttl > 0 ? ttl : windowSeconds,
+      };
+    }
+
+    const count = parseInt(current);
+    if (count >= limit) {
+      const ttl = await redis.ttl(key);
+      return {
+        allowed: false,
+        count,
+        limit,
+        remaining: 0,
+        windowSeconds,
+        resetSeconds: typeof ttl === "number" && ttl > 0 ? ttl : windowSeconds,
+      };
+    }
+
+    const newCount = await redis.incr(key);
+    const ttl = await redis.ttl(key);
+    return {
+      allowed: true,
+      count: newCount,
+      limit,
+      remaining: Math.max(0, limit - newCount),
+      windowSeconds,
+      resetSeconds: typeof ttl === "number" && ttl > 0 ? ttl : windowSeconds,
+    };
+  } catch {
+    return fallback;
+  }
 }
 
 /**
