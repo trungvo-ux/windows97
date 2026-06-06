@@ -23,7 +23,6 @@ import { useFilesStore } from "@/stores/useFilesStore";
 import { InputDialog } from "@/components/dialogs/InputDialog";
 import { useFileSystem } from "@/apps/finder/hooks/useFileSystem";
 import { useChatsStore } from "@/stores/useChatsStore";
-import { useLaunchApp } from "@/hooks/useLaunchApp";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -212,7 +211,6 @@ export default function HtmlPreview({
 
   // Use file system hook for saving applets
   const { saveFile } = useFileSystem("/", { skipLoad: true });
-  const launchApp = useLaunchApp();
   const username = useChatsStore((state) => state.username);
   const authToken = useChatsStore((state) => state.authToken);
   const previewRef = useRef<HTMLDivElement>(null);
