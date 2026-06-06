@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Sounds, useSound } from "@/hooks/useSound";
 import { getAudioContext, resumeAudioContext } from "@/lib/audioContext";
 import { useAppStore } from "@/stores/useAppStore";
@@ -6,9 +6,20 @@ import { useAppStore } from "@/stores/useAppStore";
 type BootPhase = "bios" | "splash" | "desktop" | "done";
 
 const BIOS_DURATION_MS = 1500;
-const SPLASH_DURATION_MS = 4000;
+const SPLASH_DURATION_MS = 2000;
 const DESKTOP_FADE_MS = 1000;
-const LOADING_SEGMENT_COUNT = 18;
+const LOADING_SEGMENT_WIDTH_PX = 6;
+const LOADING_SEGMENT_GAP_PX = 2;
+const LOADING_SEGMENT_MIN = 32;
+
+function estimateSegmentCount(widthPx: number): number {
+  const trackPadding = 6;
+  const available = widthPx - trackPadding;
+  const count = Math.floor(
+    available / (LOADING_SEGMENT_WIDTH_PX + LOADING_SEGMENT_GAP_PX)
+  );
+  return Math.max(LOADING_SEGMENT_MIN, count);
+}
 
 const BIOS_LINES = [
   "PhoenixBIOS 4.0 Release 6.0",
@@ -34,11 +45,6 @@ const STARTUP_CHIME_NOTES = [
   { frequency: 783.99, start: 0.18, duration: 1.0, peak: 0.14 },
   { frequency: 1046.5, start: 0.38, duration: 1.0, peak: 0.1 },
 ];
-
-const LOADING_SEGMENTS = Array.from({ length: LOADING_SEGMENT_COUNT }, (_, index) => ({
-  id: `segment-${index}`,
-  delayMs: (index / LOADING_SEGMENT_COUNT) * SPLASH_DURATION_MS,
-}));
 
 interface Windows98BootSequenceProps {
   onComplete: () => void;
@@ -103,6 +109,10 @@ export function Windows98BootSequence({ onComplete }: Windows98BootSequenceProps
   const [phase, setPhase] = useState<BootPhase>("bios");
   const [visibleLineCount, setVisibleLineCount] = useState(0);
   const [clock, setClock] = useState(() => formatClock(new Date()));
+  const [segmentCount, setSegmentCount] = useState(() =>
+    estimateSegmentCount(typeof window !== "undefined" ? window.innerWidth : 800)
+  );
+  const trackRef = useRef<HTMLDivElement>(null);
   const hasPlayedStartupSoundRef = useRef(false);
   const { play: playBootSound } = useSound(Sounds.BOOT, 0.55);
   const uiSoundsEnabled = useAppStore((state) => state.uiSoundsEnabled);
@@ -110,6 +120,23 @@ export function Windows98BootSequence({ onComplete }: Windows98BootSequenceProps
   const masterVolume = useAppStore((state) => state.masterVolume);
 
   const biosLines = useMemo(() => BIOS_LINES, []);
+
+  const loadingSegments = useMemo(
+    () =>
+      Array.from({ length: segmentCount }, (_, index) => ({
+        id: `segment-${index}`,
+        delayMs: (index / segmentCount) * SPLASH_DURATION_MS,
+      })),
+    [segmentCount]
+  );
+
+  useLayoutEffect(() => {
+    if (phase !== "splash") return;
+
+    const track = trackRef.current;
+    const width = track?.clientWidth ?? window.innerWidth;
+    setSegmentCount(estimateSegmentCount(width));
+  }, [phase]);
 
   const playStartupSound = useCallback(async () => {
     if (!uiSoundsEnabled || hasPlayedStartupSoundRef.current) return;
@@ -188,14 +215,15 @@ export function Windows98BootSequence({ onComplete }: Windows98BootSequenceProps
         <div className="win98-boot__splash">
           <p className="win98-boot__status">Booting up your system</p>
           <div
+            ref={trackRef}
             className="win98-boot__loading-track"
             role="progressbar"
             aria-label="Booting up your system"
             aria-valuemin={0}
-            aria-valuemax={LOADING_SEGMENT_COUNT}
-            aria-valuenow={LOADING_SEGMENT_COUNT}
+            aria-valuemax={segmentCount}
+            aria-valuenow={segmentCount}
           >
-            {LOADING_SEGMENTS.map((segment) => (
+            {loadingSegments.map((segment) => (
               <div
                 key={segment.id}
                 className="win98-boot__loading-segment"

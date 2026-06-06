@@ -1586,12 +1586,6 @@ export function InternetExplorerAppComponent({
         setYear(initialYear);
         // --- END FIX ---
 
-        toast.info(`Opening requested page`, {
-          description: `${initialUrl}${
-            initialYear !== "current" ? ` from ${initialYear}` : ""
-          }`,
-          duration: 4000,
-        });
         setTimeout(() => {
           // --- FIX: Pass initialUrl and initialYear directly ---
           handleNavigate(initialUrl, initialYear, false);
@@ -1688,12 +1682,6 @@ export function InternetExplorerAppComponent({
         console.log(
           `[IE] Navigating to direct url/year: ${navUrl} (${navYear})`
         );
-        toast.info(`Opening requested page`, {
-          description: `${navUrl}${
-            navYear !== "current" ? ` from ${navYear}` : ""
-          }`,
-          duration: 4000,
-        });
 
         setTimeout(() => {
           handleNavigate(navUrl, navYear, false);
@@ -1781,14 +1769,6 @@ export function InternetExplorerAppComponent({
           console.log(
             `[IE] Received updateApp event with direct url/year: ${directUrl} (${directYear})`
           );
-
-          // Show toast and navigate
-          toast.info(`Opening requested page`, {
-            description: `${directUrl}${
-              directYear !== "current" ? ` from ${directYear}` : ""
-            }`,
-            duration: 4000,
-          });
 
           // Use timeout to allow potential state updates (like foreground) to settle
           setTimeout(() => {

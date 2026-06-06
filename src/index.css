@@ -785,7 +785,7 @@ button.piano-key.piano-key[class*="bg-[#ff33ff]"] {
 }
 
 .win98-boot--splash {
-  background: #87ceeb url("/wallpapers/win98-boot-splash.png") center center / cover
+  background: #87ceeb url("/wallpapers/win98-boot-splash.png") center bottom / cover
     no-repeat;
 }
 
@@ -859,29 +859,39 @@ button.piano-key.piano-key[class*="bg-[#ff33ff]"] {
 }
 
 .win98-boot__splash {
-  position: relative;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
   justify-content: flex-end;
-  height: 100%;
-  padding-bottom: 56px;
-  gap: 10px;
+  align-items: stretch;
+  gap: 6px;
+  box-sizing: border-box;
+  /* Match the ~8% dark blue band in win98-boot-splash.png (640×400) */
+  min-height: 8vh;
+  padding: 0;
 }
 
 .win98-boot__status {
+  margin: 0;
   color: #fff;
-  font-family: Tahoma, "MS Sans Serif", "Pixelated MS Sans Serif", sans-serif;
+  font-family: "MS Sans Serif", "Pixelated MS Sans Serif", Tahoma, sans-serif;
   font-size: 11px;
   font-weight: 400;
   letter-spacing: 0.02em;
+  line-height: 1;
+  text-align: center;
   text-shadow: 1px 1px 0 #000;
 }
 
 .win98-boot__loading-track {
   display: flex;
   gap: 2px;
+  width: 100%;
+  box-sizing: border-box;
   padding: 2px 3px;
   background: #000080;
   border: 1px solid #fff;
@@ -889,9 +899,9 @@ button.piano-key.piano-key[class*="bg-[#ff33ff]"] {
 }
 
 .win98-boot__loading-segment {
-  width: 10px;
-  height: 14px;
-  flex-shrink: 0;
+  flex: 0 0 6px;
+  width: 6px;
+  height: clamp(12px, 2vh, 16px);
   background: #000080;
   animation: win98-boot-segment-fill 0.001s linear forwards;
 }
