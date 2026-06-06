@@ -1047,12 +1047,6 @@ export function ControlPanelsAppComponent({
                     icon: "/icons/sounds.png",
                   },
                   {
-                    path: "/Videos",
-                    name: "Videos",
-                    type: "directory-virtual",
-                    icon: "/icons/movies.png",
-                  },
-                  {
                     path: "/Sites",
                     name: "Sites",
                     type: "directory-virtual",

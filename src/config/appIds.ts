@@ -1,19 +1,14 @@
 export const appIds = [
   "finder",
-  "soundboard",
   "internet-explorer",
-  "chats",
   "textedit",
   "paint",
   "photo-booth",
-  "minesweeper",
-  "blackjack",
-  "videos",
   "ipod",
   "synth",
   "pc",
   "terminal",
-  "applet-viewer",
+  "aol",
   "control-panels",
 ] as const;
 

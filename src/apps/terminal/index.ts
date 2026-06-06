@@ -8,7 +8,7 @@ export const TerminalApp: BaseApp = {
     type: "image",
     src: "/icons/default/terminal.png",
   },
-  description: "A Unix-like terminal for interacting with the system",
+  description: "Command Prompt for TrungvOS — navigate files and run commands",
   component: TerminalAppComponent,
   helpItems: [
     {
@@ -49,13 +49,13 @@ export const TerminalApp: BaseApp = {
     },
   ],
   metadata: {
-    name: "Terminal",
+    name: "Command Prompt",
     version: "1.0",
     creator: {
-      name: "Ryo Lu",
-      url: "https://ryo.lu",
+      name: "Trung Vo",
+      url: "https://trungvo.xyz",
     },
-    github: "https://github.com/ryokun6/ryos",
+    github: "https://github.com/trungvo",
     icon: "/icons/default/terminal.png",
   },
 };

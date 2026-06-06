@@ -1,19 +1,14 @@
 import { TextEditApp } from "@/apps/textedit";
 import { InternetExplorerApp } from "@/apps/internet-explorer";
-import { ChatsApp } from "@/apps/chats";
 import ControlPanelsApp from "@/apps/control-panels";
-import { MinesweeperApp } from "@/apps/minesweeper";
-import { BlackjackApp } from "@/apps/blackjack";
-import { SoundboardApp } from "@/apps/soundboard";
 import { FinderApp } from "@/apps/finder";
 import { PaintApp } from "@/apps/paint";
-import { VideosApp } from "@/apps/videos";
 import { PcApp } from "@/apps/pc";
 import { PhotoBoothApp } from "@/apps/photo-booth";
 import { SynthApp } from "@/apps/synth";
 import { IpodApp } from "@/apps/ipod";
 import { TerminalApp } from "@/apps/terminal";
-import { AppletViewerApp } from "@/apps/applet-viewer";
+import { AolApp } from "@/apps/aol";
 import { appIds } from "./appIds";
 import type {
   BaseApp,
@@ -21,10 +16,7 @@ import type {
   InternetExplorerInitialData,
   IpodInitialData,
   PaintInitialData,
-  VideosInitialData,
 } from "@/apps/base/types";
-import type { AppletViewerInitialData } from "@/apps/applet-viewer";
-
 export type AppId = (typeof appIds)[number];
 
 export interface WindowSize {
@@ -54,25 +46,11 @@ export const appRegistry = {
       minSize: { width: 300, height: 200 },
     } as WindowConstraints,
   },
-  [SoundboardApp.id]: {
-    ...SoundboardApp,
-    windowConfig: {
-      defaultSize: { width: 650, height: 475 },
-      minSize: { width: 550, height: 375 },
-    } as WindowConstraints,
-  },
   [InternetExplorerApp.id]: {
     ...(InternetExplorerApp as BaseApp<InternetExplorerInitialData>),
     windowConfig: {
       defaultSize: { width: 730, height: 600 },
       minSize: { width: 400, height: 300 },
-    } as WindowConstraints,
-  },
-  [ChatsApp.id]: {
-    ...ChatsApp,
-    windowConfig: {
-      defaultSize: { width: 560, height: 360 },
-      minSize: { width: 300, height: 320 },
     } as WindowConstraints,
   },
   [TextEditApp.id]: {
@@ -96,29 +74,6 @@ export const appRegistry = {
       defaultSize: { width: 644, height: 510 },
       minSize: { width: 644, height: 510 },
       maxSize: { width: 644, height: 510 },
-    } as WindowConstraints,
-  },
-  [MinesweeperApp.id]: {
-    ...MinesweeperApp,
-    windowConfig: {
-      defaultSize: { width: 305, height: 400 },
-      minSize: { width: 305, height: 400 },
-      maxSize: { width: 305, height: 400 },
-    } as WindowConstraints,
-  },
-  [BlackjackApp.id]: {
-    ...BlackjackApp,
-    windowConfig: {
-      defaultSize: { width: 600, height: 650 },
-      minSize: { width: 500, height: 550 },
-      maxSize: { width: 700, height: 750 },
-    } as WindowConstraints,
-  },
-  [VideosApp.id]: {
-    ...(VideosApp as BaseApp<VideosInitialData>),
-    windowConfig: {
-      defaultSize: { width: 400, height: 420 },
-      minSize: { width: 400, height: 340 },
     } as WindowConstraints,
   },
   [IpodApp.id]: {
@@ -150,11 +105,11 @@ export const appRegistry = {
       minSize: { width: 400, height: 300 },
     } as WindowConstraints,
   },
-  [AppletViewerApp.id]: {
-    ...(AppletViewerApp as BaseApp<AppletViewerInitialData>),
+  [AolApp.id]: {
+    ...AolApp,
     windowConfig: {
-      defaultSize: { width: 320, height: 450 },
-      minSize: { width: 300, height: 200 },
+      defaultSize: { width: 820, height: 560 },
+      minSize: { width: 640, height: 430 },
     } as WindowConstraints,
   },
   [ControlPanelsApp.id]: {

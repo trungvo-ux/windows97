@@ -1,7 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { AppId, getWindowConfig } from "@/config/appRegistry";
-import { useAppletStore } from "@/stores/useAppletStore";
 import { appIds } from "@/config/appIds";
 import { AppManagerState, AppState } from "@/apps/base/types";
 import { checkShaderPerformance } from "@/utils/performanceCheck";
@@ -179,8 +178,8 @@ export const useAppStore = create<AppStoreState>()(
           },
         })),
 
-      currentWallpaper: "/wallpapers/tiles/bondi.png",
-      wallpaperSource: "/wallpapers/tiles/bondi.png",
+      currentWallpaper: "/wallpapers/photos/landscapes/bliss.jpg",
+      wallpaperSource: "/wallpapers/photos/landscapes/bliss.jpg",
       setCurrentWallpaper: (p) =>
         set({ currentWallpaper: p, wallpaperSource: p }),
 
@@ -477,20 +476,6 @@ export const useAppStore = create<AppStoreState>()(
             ? { width: window.innerWidth, height: cfg.defaultSize.height }
             : cfg.defaultSize;
 
-          // If creating an Applet Viewer window and we have a path, prefer saved size
-          if (appId === "applet-viewer") {
-            try {
-              const path = (initialData as { path?: string } | undefined)?.path;
-              if (path) {
-                const saved = useAppletStore
-                  .getState()
-                  .getAppletWindowSize(path);
-                if (saved) size = saved;
-              }
-            } catch {
-              // ignore and fall back to default size
-            }
-          }
           const instances = {
             ...state.instances,
             [createdId]: {
@@ -650,10 +635,7 @@ export const useAppStore = create<AppStoreState>()(
       launchApp: (appId, initialData, title, multiWindow = false) => {
         const state = get();
         const supportsMultiWindow =
-          multiWindow ||
-          appId === "textedit" ||
-          appId === "finder" ||
-          appId === "applet-viewer";
+          multiWindow || appId === "textedit" || appId === "finder";
         if (!supportsMultiWindow) {
           const existing = Object.values(state.instances).find(
             (i) => i.appId === appId && i.isOpen
@@ -723,20 +705,7 @@ export const useAppStore = create<AppStoreState>()(
         instances: Object.fromEntries(
           Object.entries(state.instances)
             .filter(([, inst]) => inst.isOpen)
-            .map(([id, inst]) => {
-              // For applet-viewer, exclude content from initialData to prevent localStorage storage
-              if (inst.appId === "applet-viewer" && inst.initialData) {
-                const appletData = inst.initialData as { path?: string; content?: string; shareCode?: string; icon?: string; name?: string };
-                return [id, {
-                  ...inst,
-                  initialData: {
-                    ...appletData,
-                    content: "", // Exclude content - it should be loaded from IndexedDB
-                  },
-                }];
-              }
-              return [id, inst];
-            })
+            .map(([id, inst]) => [id, inst])
         ),
         instanceOrder: state.instanceOrder.filter(
           (id) => state.instances[id]?.isOpen
@@ -776,6 +745,10 @@ export const useAppStore = create<AppStoreState>()(
       },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
+        if (state.currentWallpaper === "/wallpapers/tiles/bondi.png") {
+          state.currentWallpaper = "/wallpapers/photos/landscapes/bliss.jpg";
+          state.wallpaperSource = "/wallpapers/photos/landscapes/bliss.jpg";
+        }
         // Clean instanceOrder after rehydrate
         if (
           (state as unknown as { instanceOrder?: string[] }).instanceOrder &&

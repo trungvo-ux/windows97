@@ -14,7 +14,7 @@ import {
 import { STORES } from "@/utils/indexedDB";
 import { useTerminalStore } from "@/stores/useTerminalStore";
 import { useLaunchApp } from "@/hooks/useLaunchApp";
-import { useAiChat } from "@/apps/chats/hooks/useAiChat";
+import { useAiChat } from "@/hooks/useAiChat";
 import { useAppContext } from "@/contexts/AppContext";
 import { useAppStore } from "@/stores/useAppStore";
 import { appRegistry } from "@/config/appRegistry";
@@ -36,7 +36,6 @@ import TaskList from "@tiptap/extension-task-list";
 import TaskItem from "@tiptap/extension-task-item";
 import { htmlToMarkdown } from "@/utils/markdown";
 import { useInternetExplorerStore } from "@/stores/useInternetExplorerStore";
-import { useVideoStore } from "@/stores/useVideoStore";
 import { useFilesStore } from "@/stores/useFilesStore";
 import { useThemeStore } from "@/stores/useThemeStore";
 import EmojiAquarium from "@/components/shared/EmojiAquarium";
@@ -68,16 +67,40 @@ const getAppName = (id?: string): string => {
   return entry?.name || formatToolName(id);
 };
 
+const createWelcomeMessage = (): CommandHistory => {
+  const currentTime = new Date().toLocaleTimeString();
+  return {
+    command: "",
+    output: `Microsoft Windows 98 [Version 4.10.2222]
+(C) Copyright Microsoft Corp. 1981-1998.
+
+C:\\TRUNGVO> systeminfo
+
+Host Name:           TRUNGVO-WS
+OS:                  TrungvOS (Windows 98 Shell)
+Stack:               Next.js 16 · React 19 · Three.js · TypeScript
+Role:                Product Designer @ IBM — watsonx.data
+Focus:               AI-native UX, design systems, immersive web
+Site:                https://trungvo.xyz
+Location:            Bay Area, CA
+Status:              Available for freelance
+
+Last login: ${currentTime}
+Type 'help' for available commands.
+
+`,
+    path: "welcome-message",
+  };
+};
+
 // Minimal system state for AI chat requests
 const getSystemState = () => {
   const appStore = useAppStore.getState();
   const { username } = useChatsStore.getState();
   const ieStore = useInternetExplorerStore.getState();
-  const videoStore = useVideoStore.getState();
   const ipodStore = useIpodStore.getState();
   const textEditStore = useTextEditStore.getState();
 
-  const currentVideo = videoStore.getCurrentVideo();
   const currentTrack =
     ipodStore.tracks &&
     ipodStore.currentIndex >= 0 &&
@@ -180,20 +203,6 @@ const getSystemState = () => {
       currentPageTitle: ieStore.currentPageTitle,
       aiGeneratedHtml: ieStore.aiGeneratedHtml,
       aiGeneratedMarkdown: ieHtmlMarkdown,
-    },
-    video: {
-      currentVideo: currentVideo
-        ? {
-            id: currentVideo.id,
-            url: currentVideo.url,
-            title: currentVideo.title,
-            artist: currentVideo.artist,
-          }
-        : null,
-      isPlaying: videoStore.isPlaying,
-      loopAll: videoStore.loopAll,
-      loopCurrent: videoStore.loopCurrent,
-      isShuffled: videoStore.isShuffled,
     },
     ipod: {
       currentTrack: currentTrack
@@ -357,11 +366,14 @@ export function TerminalAppComponent({
   instanceId,
   onNavigateNext,
   onNavigatePrevious,
-}: AppProps) {
+  standalone = false,
+}: AppProps & { standalone?: boolean }) {
   const [isHelpDialogOpen, setIsHelpDialogOpen] = useState(false);
   const [isAboutDialogOpen, setIsAboutDialogOpen] = useState(false);
   const [currentCommand, setCurrentCommand] = useState("");
-  const [commandHistory, setCommandHistory] = useState<CommandHistory[]>([]);
+  const [commandHistory, setCommandHistory] = useState<CommandHistory[]>(() => [
+    createWelcomeMessage(),
+  ]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [historyCommands, setHistoryCommands] = useState<string[]>([]);
   const [fontSize, setFontSize] = useState(12); // Default font size in pixels
@@ -442,7 +454,18 @@ export function TerminalAppComponent({
     stopElevatorMusic,
     playDingSound,
     playMooSound,
+    playTypingSound,
+    playTabSwitchSound,
   } = useTerminalSounds();
+
+  // Play tab-switch sound when terminal gains focus (switching to this tab)
+  const prevForegroundRef = useRef(isForeground);
+  useEffect(() => {
+    if (isForeground && !prevForegroundRef.current) {
+      playTabSwitchSound();
+    }
+    prevForegroundRef.current = isForeground;
+  }, [isForeground, playTabSwitchSound]);
 
   const { username } = useChatsStore();
 
@@ -452,21 +475,12 @@ export function TerminalAppComponent({
     setHistoryCommands(commandHistory.map((cmd) => cmd.command));
   }, []);
 
-  // Initialize with welcome message
+  // Sync welcome message when not already set (e.g. after store load)
   useEffect(() => {
-    const currentTime = new Date().toLocaleTimeString();
-    const asciiArt = `     __  __ 
- _  /  \\(_  
-| \\/\\__/__) 
-  /         `;
-
-    setCommandHistory([
-      {
-        command: "",
-        output: `${asciiArt}\nlast login: ${currentTime}\ntype 'help' to see available commands\n\n`,
-        path: "welcome-message",
-      },
-    ]);
+    setCommandHistory((prev) => {
+      if (prev.length > 0 && prev[0].path === "welcome-message") return prev;
+      return [createWelcomeMessage()];
+    });
   }, []);
 
   // Handle scroll events to enable/disable auto-scroll
@@ -2437,7 +2451,7 @@ export function TerminalAppComponent({
             vimMode={vimMode}
           />
           <div className="flex mt-1">
-            <span className="text-green-400 mr-1">
+            <span className="cmd-prompt mr-1">
               {vimMode === "normal" ? "" : vimMode === "insert" ? "" : ":"}
             </span>
             <input
@@ -2447,12 +2461,15 @@ export function TerminalAppComponent({
               onChange={
                 vimMode === "insert"
                   ? handleVimTextInput
-                  : (e) => setCurrentCommand(e.target.value)
+                  : (e) => {
+                      playTypingSound();
+                      setCurrentCommand(e.target.value);
+                    }
               }
               onKeyDown={handleKeyDown}
               onFocus={() => setInputFocused(true)}
               onBlur={() => setInputFocused(false)}
-              className={`flex-1 bg-transparent text-white font-monaco focus:outline-none terminal-input ${
+              className={`flex-1 bg-transparent font-monaco focus:outline-none terminal-input ${
                 inputFocused ? "input--focused" : ""
               }`}
               style={{ fontSize: `${fontSize}px` }}
@@ -2499,12 +2516,12 @@ export function TerminalAppComponent({
               {item.command && (
                 <div className="flex select-text">
                   {item.path === "ai-user" ? (
-                    <span className="text-purple-400 mr-2 select-text cursor-text">
+                    <span className="cmd-bright mr-2 select-text cursor-text">
                       <span className="inline-block w-2 text-center">→</span>{" "}
                       ryo
                     </span>
                   ) : (
-                    <span className="text-green-400 mr-2 select-text cursor-text">
+                    <span className="cmd-prompt mr-2 select-text cursor-text">
                       <span className="inline-block w-2 text-center">→</span>{" "}
                       {item.path === "/" ? "/" : item.path}
                     </span>
@@ -2517,12 +2534,12 @@ export function TerminalAppComponent({
               {item.output && (
                 <div
                   className={`ml-0 select-text ${
-                    item.path === "ai-thinking" ? "text-gray-400" : ""
-                  } ${item.path === "ai-assistant" ? "text-purple-100" : ""} ${
-                    item.path === "ai-error" ? "text-red-400" : ""
-                  } ${item.path === "welcome-message" ? "text-gray-400" : ""} ${
+                    item.path === "ai-thinking" ? "cmd-dim" : ""
+                  } ${item.path === "ai-assistant" ? "cmd-bright" : ""} ${
+                    item.path === "ai-error" ? "cmd-error" : ""
+                  } ${item.path === "welcome-message" ? "cmd-dim" : ""} ${
                     // Add urgent message styling
-                    isUrgentMessage(item.output) ? "text-red-400" : ""
+                    isUrgentMessage(item.output) ? "cmd-error" : ""
                   } ${
                     // Add system message styling
                     item.output.startsWith("ask ryo anything") ||
@@ -2534,7 +2551,7 @@ export function TerminalAppComponent({
                     item.output.includes("already exists") ||
                     item.output.startsWith("file not found:") ||
                     item.output.startsWith("no files found")
-                      ? "text-gray-400"
+                      ? "cmd-dim"
                       : ""
                   }`}
                 >
@@ -2546,7 +2563,7 @@ export function TerminalAppComponent({
                         </span>{" "}
                         ryo
                       </span>
-                      <span className="text-gray-500 italic shimmer-subtle">
+                      <span className="cmd-dim italic shimmer-subtle">
                         {" is thinking"}
                         <AnimatedEllipsis />
                       </span>
@@ -2600,12 +2617,12 @@ export function TerminalAppComponent({
                                       )
                                     : line;
                                   const cls = urgent
-                                    ? "text-red-300"
+                                    ? "cmd-error"
                                     : isSpin
                                     ? "gradient-spin italic"
                                     : isRes
-                                    ? "text-gray-400"
-                                    : "text-purple-300";
+                                    ? "cmd-dim"
+                                    : "cmd-bright";
                                   return (
                                     <span
                                       key={idx}
@@ -2659,6 +2676,7 @@ export function TerminalAppComponent({
                         speed={10}
                         className=""
                         renderMarkdown={shouldApplyMarkdown(item.path)}
+                        onCharacterTyped={playTypingSound}
                       />
                     </>
                   ) : (
@@ -2697,7 +2715,7 @@ export function TerminalAppComponent({
             className="flex transition-all duration-200 select-text"
           >
             {isInAiMode ? (
-              <span className="text-purple-400 mr-2 whitespace-nowrap select-text cursor-text">
+              <span className="cmd-bright mr-2 whitespace-nowrap select-text cursor-text">
                 {isAiLoading ? (
                   <span>
                     <span className="gradient-spin">
@@ -2714,7 +2732,7 @@ export function TerminalAppComponent({
                 )}
               </span>
             ) : (
-              <span className="text-green-400 mr-2 whitespace-nowrap select-text cursor-text">
+              <span className="cmd-prompt mr-2 whitespace-nowrap select-text cursor-text">
                 <span className="inline-block w-2 text-center">→</span>{" "}
                 {currentPath === "/" ? "/" : currentPath}
               </span>
@@ -2724,14 +2742,17 @@ export function TerminalAppComponent({
                 ref={inputRef}
                 type="text"
                 value={currentCommand}
-                onChange={(e) => setCurrentCommand(e.target.value)}
+                onChange={(e) => {
+                  playTypingSound();
+                  setCurrentCommand(e.target.value);
+                }}
                 onKeyDown={handleKeyDown}
                 onFocus={() => setInputFocused(true)}
                 onBlur={() => setInputFocused(false)}
                 onTouchStart={(e) => {
                   e.preventDefault();
                 }}
-                className={`w-full text-white font-monaco focus:outline-none bg-transparent terminal-input ${
+                className={`w-full font-monaco focus:outline-none bg-transparent terminal-input ${
                   inputFocused ? "input--focused" : ""
                 }`}
                 style={{ fontSize: `${fontSize}px` }}
@@ -2739,7 +2760,7 @@ export function TerminalAppComponent({
               />
               {isAiLoading && isInAiMode && (
                 <div className="absolute top-0 left-0 w-full h-full pointer-events-none flex items-center">
-                  <span className="text-gray-400/40 opacity-30 shimmer">
+                  <span className="cmd-dim opacity-30 shimmer">
                     is thinking
                     <AnimatedEllipsis />
                   </span>
@@ -2777,56 +2798,87 @@ export function TerminalAppComponent({
 
   if (!isWindowOpen) return null;
 
+  const terminalContent = (
+    <motion.div
+      className="terminal-cmd flex flex-col flex-1 min-h-0 w-full relative overflow-hidden select-text"
+      style={{ fontSize: `${fontSize}px` }}
+      animate={
+        terminalFlash
+          ? {
+              filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"],
+              scale: [1, 1.01, 1],
+            }
+          : {}
+      }
+      transition={{ duration: 0.3, ease: "easeOut" }}
+    >
+      <div
+        ref={terminalRef}
+        className="flex-1 min-h-0 overflow-auto whitespace-pre-wrap select-text cursor-text p-3 relative z-0"
+        onClick={(e) => {
+          if (window.getSelection()?.toString() === "") {
+            e.stopPropagation();
+            inputRef.current?.focus();
+            if (!standalone && !isForeground) {
+              bringToForeground("terminal");
+            }
+          }
+        }}
+        onScroll={handleScroll}
+      >
+        {renderMainContent()}
+      </div>
+    </motion.div>
+  );
+
+  if (standalone) {
+    return (
+      <div className="fixed inset-0 w-full h-full min-h-screen flex flex-col bg-black overflow-hidden">
+        {/* Full-screen command prompt */}
+        <div className="flex flex-col flex-1 min-h-0 w-full h-full">
+          {terminalContent}
+        </div>
+        <HelpDialog
+          isOpen={isHelpDialogOpen}
+          onOpenChange={setIsHelpDialogOpen}
+          appName="Terminal"
+          helpItems={helpItems || []}
+        />
+        <AboutDialog
+          isOpen={isAboutDialogOpen}
+          onOpenChange={setIsAboutDialogOpen}
+          metadata={
+            appMetadata || {
+              name: "Command Prompt",
+              version: "1.0",
+              creator: {
+                name: "Trung Vo",
+                url: "https://trungvo.xyz",
+              },
+              github: "https://github.com/trungvo",
+              icon: "/icons/default/terminal.png",
+            }
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <>
       {!isXpTheme && isForeground && menuBar}
       <WindowFrame
         appId="terminal"
-        title="Terminal"
+        title="Command Prompt"
         onClose={onClose}
         isForeground={isForeground}
-        transparentBackground={true}
         skipInitialSound={skipInitialSound}
         instanceId={instanceId}
         onNavigateNext={onNavigateNext}
         onNavigatePrevious={onNavigatePrevious}
         menuBar={isXpTheme ? menuBar : undefined}
       >
-        <motion.div
-          className="flex flex-col h-full w-full bg-black/80 backdrop-blur-lg text-white antialiased font-monaco overflow-hidden select-text"
-          style={{
-            fontSize: `${fontSize}px`,
-            fontFamily:
-              '"Monaco", "ArkPixel", "SerenityOS-Emoji", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", "Courier New", monospace',
-          }}
-          animate={
-            terminalFlash
-              ? {
-                  filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"],
-                  scale: [1, 1.01, 1],
-                }
-              : {}
-          }
-          transition={{ duration: 0.3, ease: "easeOut" }}
-        >
-          <div
-            ref={terminalRef}
-            className="flex-1 overflow-auto whitespace-pre-wrap select-text cursor-text p-2"
-            onClick={(e) => {
-              // Only focus input if this isn't a text selection
-              if (window.getSelection()?.toString() === "") {
-                e.stopPropagation();
-                inputRef.current?.focus();
-                if (!isForeground) {
-                  bringToForeground("terminal");
-                }
-              }
-            }}
-            onScroll={handleScroll}
-          >
-            {renderMainContent()}
-          </div>
-        </motion.div>
+        {terminalContent}
       </WindowFrame>
       <HelpDialog
         isOpen={isHelpDialogOpen}
@@ -2839,13 +2891,13 @@ export function TerminalAppComponent({
         onOpenChange={setIsAboutDialogOpen}
         metadata={
           appMetadata || {
-            name: "Terminal",
+            name: "Command Prompt",
             version: "1.0",
             creator: {
-              name: "Ryo Lu",
-              url: "https://ryo.lu",
+              name: "Trung Vo",
+              url: "https://trungvo.xyz",
             },
-            github: "https://github.com/ryokun6/ryos",
+            github: "https://github.com/trungvo",
             icon: "/icons/default/terminal.png",
           }
         }

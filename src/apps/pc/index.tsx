@@ -9,7 +9,7 @@ export const appMetadata = {
     url: "https://ryo.lu",
   },
   github: "https://github.com/ryokun6/ryos",
-  icon: "/icons/default/pc.png",
+  icon: "/icons/default/joycon.png",
 };
 
 export const helpItems = [
@@ -48,7 +48,7 @@ export const helpItems = [
 export const PcApp: BaseApp = {
   id: "pc",
   name: "Virtual PC",
-  icon: { type: "image", src: "/icons/default/pc.png" },
+  icon: { type: "image", src: "/icons/default/joycon.png" },
   description: "DOSBox Emulator",
   component: PcAppComponent,
   windowConstraints: {

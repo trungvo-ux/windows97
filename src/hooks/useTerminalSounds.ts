@@ -102,6 +102,46 @@ const DING_PRESET = {
   duration: "8n",
 };
 
+// Typing sound preset (short mechanical click for terminal / Fallout feel)
+const TYPING_PRESET = {
+  oscillator: {
+    type: "square" as const,
+  },
+  envelope: {
+    attack: 0.002,
+    decay: 0.02,
+    sustain: 0,
+    release: 0.02,
+  },
+  filter: {
+    frequency: 2000,
+    rolloff: -24 as const,
+  },
+  volume: -18,
+  note: "C6",
+  duration: "32n",
+};
+
+// Tab-switch sound (Fallout-style short beep when switching to terminal)
+const TAB_SWITCH_PRESET = {
+  oscillator: {
+    type: "square" as const,
+  },
+  envelope: {
+    attack: 0.01,
+    decay: 0.08,
+    sustain: 0,
+    release: 0.1,
+  },
+  filter: {
+    frequency: 1200,
+    rolloff: -24 as const,
+  },
+  volume: -12,
+  note: "E5",
+  duration: "16n",
+};
+
 export function useTerminalSounds() {
   const [isInitialized, setIsInitialized] = useState(false);
   const terminalSoundsEnabled = useAppStore((s) => s.terminalSoundsEnabled);
@@ -751,6 +791,11 @@ export function useTerminalSounds() {
   const dingSynthRef = useRef<Tone.Synth | null>(null);
   // For cowsay moo sound
   const mooSynthRef = useRef<Tone.Synth | null>(null);
+  // For typing (terminal / Fallout style)
+  const typingSynthRef = useRef<Tone.Synth | null>(null);
+  const lastTypingSoundTimeRef = useRef(0);
+  // For tab switch (bringing terminal to foreground)
+  const tabSwitchSynthRef = useRef<Tone.Synth | null>(null);
 
   const resumeAudioContext = async () => {
     if (Tone.context.state === "suspended") {
@@ -791,6 +836,16 @@ export function useTerminalSounds() {
           mooSynthRef.current = null;
         }
 
+        if (typingSynthRef.current) {
+          typingSynthRef.current.dispose();
+          typingSynthRef.current = null;
+        }
+
+        if (tabSwitchSynthRef.current) {
+          tabSwitchSynthRef.current.dispose();
+          tabSwitchSynthRef.current = null;
+        }
+
         console.debug("Tone context was closed – created a new context and cleared synth cache");
       } catch (err) {
         console.error("Failed to reset Tone context:", err);
@@ -814,6 +869,8 @@ export function useTerminalSounds() {
           });
           dingSynthRef.current = createSynth(DING_PRESET);
           mooSynthRef.current = createSynth(MOO_PRESET);
+          typingSynthRef.current = createSynth(TYPING_PRESET);
+          tabSwitchSynthRef.current = createSynth(TAB_SWITCH_PRESET);
         }
         return true;
       } catch (error) {
@@ -1005,6 +1062,51 @@ export function useTerminalSounds() {
     }
   }, [isMuted, isInitialized]);
 
+  // Play typing sound (throttled for terminal / typewriter)
+  const TYPING_SOUND_MIN_INTERVAL_MS = 35;
+  const playTypingSound = useCallback(async () => {
+    if (isMuted) return;
+
+    if (!(await initializeToneOnce())) return;
+
+    const now = performance.now();
+    if (now - lastTypingSoundTimeRef.current < TYPING_SOUND_MIN_INTERVAL_MS) return;
+    lastTypingSoundTimeRef.current = now;
+
+    if (typingSynthRef.current) {
+      try {
+        const toneNow = Tone.now();
+        typingSynthRef.current.triggerAttackRelease(
+          TYPING_PRESET.note,
+          TYPING_PRESET.duration,
+          toneNow
+        );
+      } catch (error) {
+        console.debug("Error playing typing sound:", error);
+      }
+    }
+  }, [isMuted, isInitialized]);
+
+  // Play tab-switch sound when switching to terminal (Fallout-style)
+  const playTabSwitchSound = useCallback(async () => {
+    if (isMuted) return;
+
+    if (!(await initializeToneOnce())) return;
+
+    if (tabSwitchSynthRef.current) {
+      try {
+        const now = Tone.now();
+        tabSwitchSynthRef.current.triggerAttackRelease(
+          TAB_SWITCH_PRESET.note,
+          TAB_SWITCH_PRESET.duration,
+          now
+        );
+      } catch (error) {
+        console.debug("Error playing tab switch sound:", error);
+      }
+    }
+  }, [isMuted, isInitialized]);
+
   const toggleMute = useCallback(() => {
     setTerminalSoundsEnabled(!useAppStore.getState().terminalSoundsEnabled);
   }, [setTerminalSoundsEnabled]);
@@ -1024,6 +1126,14 @@ export function useTerminalSounds() {
       if (mooSynthRef.current) {
         mooSynthRef.current.dispose();
       }
+
+      if (typingSynthRef.current) {
+        typingSynthRef.current.dispose();
+      }
+
+      if (tabSwitchSynthRef.current) {
+        tabSwitchSynthRef.current.dispose();
+      }
     };
   }, []);
 
@@ -1041,13 +1151,20 @@ export function useTerminalSounds() {
     stopElevatorMusic,
     playDingSound,
     playMooSound,
+    playTypingSound,
+    playTabSwitchSound,
     toggleMute,
     isMuted,
   };
 }
 
 function createSynth(
-  preset: (typeof TERMINAL_SOUND_PRESETS)[SoundType] | typeof DING_PRESET | typeof MOO_PRESET
+  preset:
+    | (typeof TERMINAL_SOUND_PRESETS)[SoundType]
+    | typeof DING_PRESET
+    | typeof MOO_PRESET
+    | typeof TYPING_PRESET
+    | typeof TAB_SWITCH_PRESET
 ) {
   // Create effects chain
   const filter = new Tone.Filter({

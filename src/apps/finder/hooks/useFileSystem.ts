@@ -6,7 +6,6 @@ export { STORES };
 import { getNonFinderApps, AppId, getAppIconPath } from "@/config/appRegistry";
 import { useLaunchApp } from "@/hooks/useLaunchApp";
 import { useIpodStore } from "@/stores/useIpodStore";
-import { useVideoStore } from "@/stores/useVideoStore";
 import {
   useInternetExplorerStore,
   type Favorite,
@@ -404,11 +403,6 @@ export function useFileSystem(
     setCurrentIndex: setIpodIndex,
     setIsPlaying: setIpodPlaying,
   } = useIpodStore();
-  const {
-    videos: videoTracks,
-    setCurrentVideoId: setVideoIndex,
-    setIsPlaying: setVideoPlaying,
-  } = useVideoStore();
   const internetExplorerStore = useInternetExplorerStore();
 
   // Define getParentPath inside hook
@@ -670,59 +664,6 @@ export function useFileSystem(
             data: { index: globalIndex },
           };
         });
-      } else if (currentPath === "/Videos") {
-        // At root videos directory, show artist folders
-        const artistSet = new Set<string>();
-
-        // Collect all unique artists
-        videoTracks.forEach((video) => {
-          if (video.artist) {
-            artistSet.add(video.artist);
-          }
-        });
-
-        // Create a folder for artists with videos
-        displayFiles = Array.from(artistSet).map((artist) => ({
-          name: artist,
-          isDirectory: true,
-          path: `/Videos/${encodeURIComponent(artist)}`,
-          icon: "/icons/directory.png",
-          type: "directory-virtual",
-        }));
-
-        // Add an "Unknown Artist" folder if there are videos without artists
-        if (videoTracks.some((video) => !video.artist)) {
-          displayFiles.push({
-            name: "Unknown Artist",
-            isDirectory: true,
-            path: `/Videos/Unknown Artist`,
-            icon: "/icons/directory.png",
-            type: "directory-virtual",
-          });
-        }
-      } else if (currentPath.startsWith("/Videos/")) {
-        // Inside a video artist folder
-        const artistName = decodeURIComponent(
-          currentPath.replace("/Videos/", "")
-        );
-        const artistVideos = videoTracks.filter((video) =>
-          artistName === "Unknown Artist"
-            ? !video.artist
-            : video.artist === artistName
-        );
-
-        // Display all videos for this artist
-        displayFiles = artistVideos.map((video) => {
-          return {
-            name: `${video.title}.mov`,
-            isDirectory: false,
-            path: `/Videos/${video.id}`,
-            icon: "/icons/video-tape.png",
-            appId: "videos",
-            type: "Video",
-            data: { videoId: video.id },
-          };
-        });
       } else if (currentPath.startsWith("/Sites")) {
         console.log(
           `[useFileSystem:loadFiles] Loading /Sites path: ${currentPath}`
@@ -881,19 +822,7 @@ export function useFileSystem(
           modifiedAt: undefined, // Virtual files don't have timestamps
         }));
       }
-      // b. Video Library (Virtual)
-      else if (currentPath === "/Video Library") {
-        displayFiles = videoTracks.map((video) => ({
-          name: `${video.title}.mov`,
-          isDirectory: false,
-          path: `/Video Library/${video.title}.mov`,
-          type: "Video",
-          data: video,
-          icon: "/icons/file-video.png",
-          modifiedAt: undefined, // Virtual files don't have timestamps
-        }));
-      }
-      // c. Favorites (Virtual)
+      // b. Favorites (Virtual)
       else if (currentPath === "/Favorites") {
         displayFiles = internetExplorerStore.favorites.map((favorite) => ({
           name: `${favorite.title}.webloc`,
@@ -918,7 +847,6 @@ export function useFileSystem(
     currentPath,
     fileStore.items,
     ipodTracks,
-    videoTracks,
     internetExplorerStore.favorites,
   ]);
 
@@ -1062,42 +990,12 @@ export function useFileSystem(
           launchApp("paint", {
             initialData: { path: file.path, content: contentToUse },
           }); // Pass contentToUse (Blob)
-        } else if (
-          file.path.startsWith("/Applets/") &&
-          (file.path.endsWith(".app") || file.path.endsWith(".html"))
-        ) {
-          // Open HTML applets with applet-viewer
-          console.log("[useFileSystem] Opening applet:", {
-            path: file.path,
-            contentLength: contentAsString?.length || 0,
-            hasContent: !!contentAsString,
-          });
-
-          // Launch applet viewer - duplicate detection is handled by useLaunchApp
-          try {
-            launchApp("applet-viewer", {
-              initialData: {
-                path: file.path,
-                content: contentAsString ?? "",
-              },
-            });
-          } catch (e) {
-            console.warn(
-              "[useFileSystem] Failed opening applet:",
-              e
-            );
-          }
         } else if (file.appId === "ipod" && file.data?.index !== undefined) {
           // iPod uses data directly from the index we calculated
           const trackIndex = file.data.index;
           setIpodIndex(trackIndex);
           setIpodPlaying(true);
           launchApp("ipod");
-        } else if (file.appId === "videos" && file.data?.videoId) {
-          // Videos uses video ID directly
-          setVideoIndex(file.data.videoId);
-          setVideoPlaying(true);
-          launchApp("videos");
         } else if (file.type === "site-link" && file.data?.url) {
           // Pass url and year via initialData instead of using IE store directly
           launchApp("internet-explorer", {
@@ -1122,8 +1020,6 @@ export function useFileSystem(
       navigateToPath,
       setIpodIndex,
       setIpodPlaying,
-      setVideoIndex,
-      setVideoPlaying,
       internetExplorerStore,
       ensureDefaultContent,
       fetchAppletContentFromShare,

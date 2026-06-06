@@ -1,8 +1,9 @@
 {
   "version": 1,
-  "generatedAt": "2025-11-10T17:42:50.404Z",
+  "generatedAt": "2026-06-06T20:50:09.670Z",
   "themes": {
     "default": [
+      "aol-online.png",
       "app.png",
       "apple.png",
       "applet.png",
@@ -52,6 +53,7 @@
       "info.png",
       "internet.png",
       "ipod.png",
+      "joycon.png",
       "mac-classic.png",
       "mac.png",
       "macpaint/brush.png",
@@ -194,6 +196,7 @@
       "images.png",
       "info.png",
       "internet.png",
+      "joycon.png",
       "mac-classic.png",
       "mac.png",
       "minesweeper.png",

@@ -42,6 +42,7 @@ export const win98: OsTheme = {
     windowShadow: "none",
   },
   wallpaperDefaults: {
+    photo: "/wallpapers/photos/landscapes/bliss.jpg",
     tile: "/wallpapers/tiles/bondi.png",
     video: "/wallpapers/photos/aqua/water.jpg",
   },

@@ -20,10 +20,6 @@ import { useSound, Sounds } from "@/hooks/useSound";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { getAppIconPath, appRegistry } from "@/config/appRegistry";
 import { ThemedIcon } from "@/components/shared/ThemedIcon";
-import { useFilesStore } from "@/stores/useFilesStore";
-import type { AppInstance } from "@/stores/useAppStore";
-import type { AppletViewerInitialData } from "@/apps/applet-viewer";
-
 // Helper function to get app name
 const getAppName = (appId: string): string => {
   const app = appRegistry[appId as keyof typeof appRegistry];
@@ -375,17 +371,6 @@ function DefaultMenuItems() {
             Sites
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => handleLaunchFinder("/Videos")}
-            className="text-md h-6 px-3 active:bg-gray-900 active:text-white flex items-center gap-2"
-          >
-            <ThemedIcon
-              name="movies.png"
-              alt="Videos"
-              className="w-4 h-4 [image-rendering:pixelated]"
-            />
-            Videos
-          </DropdownMenuItem>
-          <DropdownMenuItem
             onClick={() => handleLaunchFinder("/Trash")}
             className="text-md h-6 px-3 active:bg-gray-900 active:text-white flex items-center gap-2"
           >
@@ -540,50 +525,6 @@ export function MenuBar({ children, inWindowFrame = false }: MenuBarProps) {
   const currentTheme = useThemeStore((state) => state.current);
   const isXpTheme = currentTheme === "xp" || currentTheme === "win98";
 
-  // Get file system items for applet icons
-  const files = useFilesStore((s) => s.items);
-
-  // Helper to get applet info (icon and name) from instance
-  const getAppletInfo = (instance: AppInstance) => {
-    const initialData = instance.initialData as
-      | AppletViewerInitialData
-      | undefined;
-    const path = initialData?.path || "";
-    const file = files[path];
-
-    // Get filename from path for label
-    const getFileName = (path: string): string => {
-      const parts = path.split("/");
-      const fileName = parts[parts.length - 1];
-      return fileName.replace(/\.(html|app)$/i, "");
-    };
-
-    const label = path ? getFileName(path) : "Applet Store";
-
-    // Check if the file icon is an emoji (not a file path)
-    const fileIcon = file?.icon;
-    const isEmojiIcon =
-      fileIcon &&
-      !fileIcon.startsWith("/") &&
-      !fileIcon.startsWith("http") &&
-      fileIcon.length <= 10;
-
-    // If no path (applet store), use the applet viewer icon
-    // Otherwise, use file icon if emoji, or fallback to package emoji
-    let icon: string;
-    let isEmoji: boolean;
-    if (!path) {
-      // Applet store - use app icon
-      icon = getAppIconPath("applet-viewer");
-      isEmoji = false;
-    } else {
-      icon = isEmojiIcon ? fileIcon : "📦";
-      isEmoji = true;
-    }
-
-    return { icon, label, isEmoji };
-  };
-
   // Taskbar overflow handling (used for XP taskbar rendering)
   const runningAreaRef = useRef<HTMLDivElement>(null);
   const [visibleTaskbarIds, setVisibleTaskbarIds] = useState<string[]>([]);
@@ -703,13 +644,10 @@ export function MenuBar({ children, inWindowFrame = false }: MenuBarProps) {
                 if (!instance || !instance.isOpen) return null;
 
                 const isForeground = instanceId === foregroundInstanceId;
-                const isApplet = instance.appId === "applet-viewer";
-                
-                // Get icon and label based on app type
-                const appletInfo = isApplet ? getAppletInfo(instance) : null;
-                const displayIcon = appletInfo?.icon || getAppIconPath(instance.appId);
-                const displayLabel = appletInfo?.label || instance.title || getAppName(instance.appId);
-                const isEmoji = appletInfo?.isEmoji || false;
+                const displayIcon = getAppIconPath(instance.appId);
+                const displayLabel =
+                  instance.title || getAppName(instance.appId);
+                const isEmoji = false;
 
                 return (
                   <button
@@ -874,11 +812,10 @@ export function MenuBar({ children, inWindowFrame = false }: MenuBarProps) {
                     const instance = instances[instanceId];
                     if (!instance || !instance.isOpen) return null;
                     
-                    const isApplet = instance.appId === "applet-viewer";
-                    const appletInfo = isApplet ? getAppletInfo(instance) : null;
-                    const displayIcon = appletInfo?.icon || getAppIconPath(instance.appId);
-                    const displayLabel = appletInfo?.label || instance.title || getAppName(instance.appId);
-                    const isEmoji = appletInfo?.isEmoji || false;
+                    const displayIcon = getAppIconPath(instance.appId);
+                    const displayLabel =
+                      instance.title || getAppName(instance.appId);
+                    const isEmoji = false;
                     
                     return (
                       <DropdownMenuItem

@@ -6,6 +6,7 @@ interface TypewriterTextProps {
   className?: string;
   speed?: number;
   renderMarkdown?: boolean;
+  onCharacterTyped?: () => void;
 }
 
 // Helper function to parse simple markdown formatting
@@ -85,10 +86,13 @@ export function TypewriterText({
   className,
   speed = 15,
   renderMarkdown = false,
+  onCharacterTyped,
 }: TypewriterTextProps) {
   const [displayedText, setDisplayedText] = useState("");
   const [isComplete, setIsComplete] = useState(false);
   const textRef = useRef(text);
+  const onCharacterTypedRef = useRef(onCharacterTyped);
+  onCharacterTypedRef.current = onCharacterTyped;
 
   useEffect(() => {
     // Reset when text changes
@@ -124,6 +128,7 @@ export function TypewriterText({
       if (currentIndex < chunks.length) {
         const chunk = chunks[currentIndex];
         setDisplayedText((prev) => prev + chunk);
+        onCharacterTypedRef.current?.();
         currentIndex++;
 
         // Pause longer after punctuation for natural rhythm

@@ -160,7 +160,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/videos/:video", "destination": "/" },
     { "source": "/ipod/:track", "destination": "/" },
     { "source": "/internet-explorer/:code", "destination": "/" },
     { "source": "/applet-viewer/:code", "destination": "/" },
@@ -170,8 +169,6 @@
     { "source": "/textedit", "destination": "/" },
     { "source": "/paint", "destination": "/" },
     { "source": "/photo-booth", "destination": "/" },
-    { "source": "/minesweeper", "destination": "/" },
-    { "source": "/videos", "destination": "/" },
     { "source": "/ipod", "destination": "/" },
     { "source": "/applet-viewer", "destination": "/" },
     { "source": "/synth", "destination": "/" },

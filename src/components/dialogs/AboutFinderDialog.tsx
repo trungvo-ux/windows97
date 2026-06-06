@@ -82,16 +82,20 @@ export function AboutFinderDialog({
                     : "font-apple-garamond text-2xl"
                 )}
               >
-                TrungVOs
-                {currentTheme === "system7"
-                  ? " 7"
-                  : currentTheme === "macosx"
-                  ? " X"
-                  : currentTheme === "win98"
-                  ? " 98"
-                  : currentTheme === "xp"
-                  ? " XP"
-                  : ""}
+                {currentTheme === "win98" ? (
+                  "Windows 98"
+                ) : (
+                  <>
+                    TrungVOs
+                    {currentTheme === "system7"
+                      ? " 7"
+                      : currentTheme === "macosx"
+                      ? " X"
+                      : currentTheme === "xp"
+                      ? " XP"
+                      : ""}
+                  </>
+                )}
               </div>
             </div>
 
@@ -114,21 +118,6 @@ export function AboutFinderDialog({
                 <div>Virtual Memory: Off</div>
                 <div>
                   Largest Unused Block: {(32 - totalUsedMemory).toFixed(1)}MB
-                </div>
-                <div
-                  className={cn(
-                    "text-[10px] text-gray-500 mt-2",
-                    isXpTheme
-                      ? "font-['Pixelated_MS_Sans_Serif',Arial]"
-                      : "font-geneva-12"
-                  )}
-                  style={{
-                    fontFamily: isXpTheme
-                      ? '"Pixelated MS Sans Serif", Arial'
-                      : undefined,
-                  }}
-                >
-                  © Ryo Lu. 1992-{new Date().getFullYear()}
                 </div>
               </div>
             </div>

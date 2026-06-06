@@ -764,7 +764,6 @@ export function FinderAppComponent({
       file.path === "/Applications" ||
       file.path === "/Trash" ||
       file.path === "/Music" ||
-      file.path === "/Videos" ||
       file.path === "/Sites"
     ) {
       return;

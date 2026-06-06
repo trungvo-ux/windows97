@@ -115,21 +115,7 @@ export function AppManager({ apps }: AppManagerProps) {
       const path = window.location.pathname;
       console.log("[AppManager] Checking path:", path); // Keep this log for debugging
 
-      const launchAppletViewer = () => {
-        toast.info("Opening Applet Store...");
-
-        setTimeout(() => {
-          const event = new CustomEvent("launchApp", {
-            detail: { appId: "applet-viewer" as AppId },
-          });
-          window.dispatchEvent(event);
-          window.history.replaceState({}, "", "/");
-        }, 100);
-      };
-
-      if (path === "/applet-viewer" || path === "/applet-viewer/") {
-        launchAppletViewer();
-      } else if (path.startsWith("/internet-explorer/")) {
+      if (path.startsWith("/internet-explorer/")) {
         const shareCode = extractCodeFromPath(path);
         if (shareCode) {
           // Handle shared Internet Explorer URL - Pass code directly
@@ -154,40 +140,6 @@ export function AppManager({ apps }: AppManagerProps) {
 
           window.history.replaceState({}, "", "/"); // Clean URL
         }
-      } else if (path.startsWith("/applet-viewer/")) {
-        const shareCode = extractCodeFromPath(path);
-        if (shareCode) {
-          // Handle shared Applet Viewer URL - Pass code directly
-          console.log("[AppManager] Detected applet share code:", shareCode);
-          toast.info("Opening shared applet...");
-
-          // Use setTimeout to ensure the event listener is ready
-          setTimeout(() => {
-            const event = new CustomEvent("launchApp", {
-              detail: {
-                appId: "applet-viewer",
-                initialData: {
-                  shareCode: shareCode,
-                  path: "", // Empty path for shared applets
-                  content: "", // Will be fetched from API
-                  icon: undefined, // Will be set from API response
-                  name: undefined, // Will be set from API response
-                },
-              },
-            });
-            window.dispatchEvent(event);
-            console.log(
-              "[AppManager] Dispatched launchApp event for applet share code.",
-            );
-          }, 0);
-
-          window.history.replaceState({}, "", "/"); // Clean URL
-        } else {
-          console.log(
-            "[AppManager] No share code detected for applet viewer path, opening base app.",
-          );
-          launchAppletViewer();
-        }
       } else if (path.startsWith("/ipod/")) {
         const videoId = path.substring("/ipod/".length);
         if (videoId) {
@@ -203,25 +155,6 @@ export function AppManager({ apps }: AppManagerProps) {
             window.dispatchEvent(event);
             console.log(
               "[AppManager] Dispatched launchApp event for iPod videoId.",
-            );
-          }, 0);
-          window.history.replaceState({}, "", "/"); // Clean URL
-        }
-      } else if (path.startsWith("/videos/")) {
-        const videoId = path.substring("/videos/".length);
-        if (videoId) {
-          console.log("[AppManager] Detected Videos videoId:", videoId);
-          toast.info("Opening shared video...");
-          setTimeout(() => {
-            const event = new CustomEvent("launchApp", {
-              detail: {
-                appId: "videos",
-                initialData: { videoId },
-              },
-            });
-            window.dispatchEvent(event);
-            console.log(
-              "[AppManager] Dispatched launchApp event for Videos videoId.",
             );
           }, 0);
           window.history.replaceState({}, "", "/"); // Clean URL
@@ -249,12 +182,9 @@ export function AppManager({ apps }: AppManagerProps) {
           // Maybe redirect to root or show a 404 within the app context
           // For now, just clean the URL if it wasn't a valid app path or IE code
           // Update condition: Only clean if it's not a handled share path (we handle cleaning above)
-          // Update condition: Also check for ipod, videos, and applet-viewer paths
           if (
             !path.startsWith("/internet-explorer/") &&
-            !path.startsWith("/applet-viewer/") &&
-            !path.startsWith("/ipod/") &&
-            !path.startsWith("/videos/")
+            !path.startsWith("/ipod/")
           ) {
             window.history.replaceState({}, "", "/");
           }

@@ -3,6 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { v4 as uuidv4 } from "uuid";
 import { ensureIndexedDBInitialized, STORES } from "@/utils/indexedDB";
 import type { OsThemeId } from "@/themes/types";
+import { isRemovedAppAlias } from "@/config/removedApps";
 
 // Define the structure for a file system item (metadata)
 export interface FileSystemItem {
@@ -84,6 +85,8 @@ interface FilesStoreState {
   initializeLibrary: () => Promise<void>;
   /** Ensure all root directories from filesystem.json exist in the store */
   syncRootDirectoriesFromDefaults: () => Promise<void>;
+  /** Permanently delete aliases for apps that no longer exist */
+  purgeRemovedAppAliases: () => void;
 }
 
 // Function to load default files from JSON
@@ -580,7 +583,7 @@ export const useFilesStore = create<FilesStoreState>()(
 
       getTrashItems: () => {
         return Object.values(get().items).filter(
-          (item) => item.status === "trashed"
+          (item) => item.status === "trashed" && !isRemovedAppAlias(item)
         );
       },
 
@@ -710,6 +713,11 @@ export const useFilesStore = create<FilesStoreState>()(
         await saveDefaultContents(data.files, newItems);
       },
 
+      purgeRemovedAppAliases: () => {
+        const stale = Object.values(get().items).filter(isRemovedAppAlias);
+        stale.forEach((item) => get().removeItem(item.path, true));
+      },
+
       initializeLibrary: async () => {
         const current = get();
         // Only initialize if the library is in uninitialized state
@@ -762,6 +770,7 @@ export const useFilesStore = create<FilesStoreState>()(
           await saveDefaultContents(data.files, newItems);
           await saveDefaultContents(appletsData.applets, newItems);
         }
+        get().purgeRemovedAppAliases();
       },
 
       syncRootDirectoriesFromDefaults: async () => {
@@ -947,6 +956,10 @@ export const useFilesStore = create<FilesStoreState>()(
                   err
                 )
             );
+          }
+
+          if (state?.purgeRemovedAppAliases) {
+            state.purgeRemovedAppAliases();
           }
         };
       },

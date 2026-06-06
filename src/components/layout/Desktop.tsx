@@ -4,6 +4,7 @@ import { AppId } from "@/config/appRegistry";
 import { useState, useEffect, useRef } from "react";
 import { FileIcon } from "@/apps/finder/components/FileIcon";
 import { getAppIconPath } from "@/config/appRegistry";
+import { isRemovedAppAlias } from "@/config/removedApps";
 import { useWallpaper } from "@/hooks/useWallpaper";
 import { RightClickMenu, MenuItem } from "@/components/ui/right-click-menu";
 import { SortType } from "@/apps/finder/components/FinderMenuBar";
@@ -63,17 +64,13 @@ export function Desktop({
   // Define the default order for desktop shortcuts
   const defaultShortcutOrder: AppId[] = [
     "ipod",
-    "chats",
-    "applet-viewer",
     "internet-explorer",
     "textedit",
     "photo-booth",
-    "videos",
     "paint",
-    "soundboard",
-    "minesweeper",
     "synth",
     "terminal",
+    "aol",
     "pc",
   ];
 
@@ -85,6 +82,7 @@ export function Desktop({
         item.status === "active" &&
         item.path.startsWith("/Desktop/") &&
         !item.isDirectory &&
+        !isRemovedAppAlias(item) &&
         // Theme-conditional defaults: hide items that are marked hidden for
         // the current theme, but always show user-pinned (no hiddenOnThemes).
         (!item.hiddenOnThemes ||
@@ -183,16 +181,6 @@ export function Desktop({
         } else if (targetFile.path.startsWith("/Images/")) {
           launchApp("paint", {
             initialData: { path: targetFile.path, content: contentToUse },
-          });
-        } else if (
-          targetFile.path.startsWith("/Applets/") &&
-          (targetFile.path.endsWith(".app") || targetFile.path.endsWith(".html"))
-        ) {
-          launchApp("applet-viewer", {
-            initialData: {
-              path: targetFile.path,
-              content: contentAsString ?? "",
-            },
           });
         }
       } catch (err) {
@@ -455,10 +443,7 @@ export function Desktop({
   // Compute sorted apps based on selected sort type
   const sortedApps = [...apps]
     .filter(
-      (app) =>
-        app.id !== "finder" &&
-        app.id !== "control-panels" &&
-        app.id !== "applet-viewer"
+      (app) => app.id !== "finder" && app.id !== "control-panels"
     )
     .sort((a, b) => {
       switch (sortType) {
@@ -471,12 +456,10 @@ export function Desktop({
       }
     });
 
-  // macOS X: Only show iPod and Applet Store icons by default (with Macintosh HD shown above)
+  // macOS X: Only show iPod by default (with Macintosh HD shown above)
   const displayedApps =
     currentTheme === "macosx"
-      ? sortedApps.filter(
-          (app) => app.id === "ipod" || app.id === "applet-viewer"
-        )
+      ? sortedApps.filter((app) => app.id === "ipod")
       : sortedApps;
 
   // Create default shortcuts based on theme
@@ -497,28 +480,28 @@ export function Desktop({
     // Define the default order for desktop shortcuts
     const defaultOrder: AppId[] = [
       "ipod",
-      "chats",
-      "applet-viewer",
       "internet-explorer",
       "textedit",
       "photo-booth",
-      "videos",
       "paint",
-      "soundboard",
-      "minesweeper",
-      "blackjack",
       "synth",
       "terminal",
+      "aol",
       "pc",
     ];
+
+    // Remove desktop shortcuts for apps that no longer exist
+    Object.values(fileStore.items)
+      .filter(isRemovedAppAlias)
+      .forEach((item) => {
+        fileStore.removeItem(item.path, true);
+      });
 
     // Determine which apps should have shortcuts based on theme
     let appsToShortcut: typeof apps;
     if (currentTheme === "macosx") {
-      // macOS X: only iPod and Applet Store (applet-viewer) as default shortcuts
-      appsToShortcut = apps.filter(
-        (app) => app.id === "ipod" || app.id === "applet-viewer"
-      );
+      // macOS X: only iPod as default shortcut
+      appsToShortcut = apps.filter((app) => app.id === "ipod");
     } else {
       // Other themes: all apps except Finder and Control Panels
       appsToShortcut = apps.filter(
@@ -568,7 +551,7 @@ export function Desktop({
       fileStore.createAlias(appPath, app.name, "app", appId);
 
       // Mark default shortcuts as theme-conditional by hiding them on macOS X
-      // unless they are iPod or Applet Store, which should always be visible.
+      // unless they are iPod, which should always be visible.
       const latestDesktopItems = fileStore.getItemsInPath("/Desktop");
       const createdShortcut = latestDesktopItems.find(
         (item) =>
@@ -581,13 +564,8 @@ export function Desktop({
         return;
       }
 
-      // Only apply theme-conditional hiding for non-macOS themes and only for
-      // apps that are NOT iPod or Applet Store.
-      if (
-        currentTheme !== "macosx" &&
-        appId !== "ipod" &&
-        appId !== "applet-viewer"
-      ) {
+      // Only apply theme-conditional hiding for non-macOS themes and only for iPod.
+      if (currentTheme !== "macosx" && appId !== "ipod") {
         fileStore.updateItemMetadata(createdShortcut.path, {
           hiddenOnThemes: ["macosx"],
         });
@@ -829,11 +807,7 @@ export function Desktop({
               key={app.id}
               name={app.name}
               isDirectory={false}
-              icon={
-                isXpTheme && app.id === "pc"
-                  ? `/icons/${currentTheme}/games.png`
-                  : getAppIconPath(app.id)
-              }
+              icon={getAppIconPath(app.id)}
               onClick={(e) => handleIconClick(app.id, e)}
               onDoubleClick={(e) => {
                 e.stopPropagation();

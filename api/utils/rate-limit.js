@@ -99,7 +99,24 @@ export {
  * Increment a counter under a key with a TTL window and enforce a limit.
  * Returns details including remaining and reset seconds.
  */
+function isRedisConfigured() {
+  return Boolean(
+    process.env.REDIS_KV_REST_API_URL && process.env.REDIS_KV_REST_API_TOKEN
+  );
+}
+
 async function checkCounterLimit({ key, windowSeconds, limit }) {
+  if (!isRedisConfigured()) {
+    return {
+      allowed: true,
+      count: 0,
+      limit,
+      remaining: limit,
+      windowSeconds,
+      resetSeconds: windowSeconds,
+    };
+  }
+
   const current = await redis.get(key);
 
   if (!current) {

@@ -37,7 +37,7 @@ export function VimEditor({
       : 100;
 
   return (
-    <div className="vim-editor font-monaco text-white">
+    <div className="vim-editor font-monaco">
       {visibleLines.map((line, i) => {
         const lineNumber = position + i;
         const isCursorLine = lineNumber === vimCursorLine;
@@ -47,7 +47,7 @@ export function VimEditor({
             key={i}
             className={`vim-line flex ${isCursorLine ? "bg-white/10" : ""}`}
           >
-            <span className="text-gray-500 w-6 text-right mr-2">
+            <span className="cmd-dim w-6 text-right mr-2">
               {lineNumber + 1}
             </span>
             {isCursorLine ? (
@@ -66,7 +66,7 @@ export function VimEditor({
           </div>
         );
       })}
-      <div className="vim-status-bar flex text-white text-xs mt-2">
+      <div className="vim-status-bar flex text-xs mt-2">
         <div
           className={`px-2 py-1 font-bold ${
             vimMode === "insert" ? "bg-green-600/50" : "bg-blue-600/50"

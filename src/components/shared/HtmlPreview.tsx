@@ -877,17 +877,6 @@ export default function HtmlPreview({
       // Show success toast with button to open applet
       toast.success("Applet saved successfully", {
         description: nameWithExtension,
-        action: {
-          label: "Open",
-          onClick: () => {
-            launchApp("applet-viewer", {
-              initialData: {
-                path: appletPath,
-                content: processedHtmlContentForSave,
-              },
-            });
-          },
-        },
         duration: 5000,
       });
     } catch (err) {

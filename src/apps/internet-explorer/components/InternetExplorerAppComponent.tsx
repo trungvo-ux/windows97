@@ -13,19 +13,12 @@ import { Input } from "@/components/ui/input";
 import { InternetExplorerMenuBar } from "./InternetExplorerMenuBar";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowLeft, ArrowRight, History, Search, Share } from "lucide-react";
+import { ArrowLeft, ArrowRight, Search, Share } from "lucide-react";
 import { InputDialog } from "@/components/dialogs/InputDialog";
 import { HelpDialog } from "@/components/dialogs/HelpDialog";
 import { AboutDialog } from "@/components/dialogs/AboutDialog";
@@ -37,6 +30,7 @@ import { useAiGeneration } from "../hooks/useAiGeneration";
 import {
   useInternetExplorerStore,
   DEFAULT_FAVORITES,
+  IE_FIXED_YEAR,
   ErrorResponse,
   LanguageOption,
   LocationOption,
@@ -58,6 +52,15 @@ import { ShareItemDialog } from "@/components/dialogs/ShareItemDialog";
 import { toast } from "sonner";
 import { useThemeStore } from "@/stores/useThemeStore";
 import { ThemedIcon } from "@/components/shared/ThemedIcon";
+import {
+  IE_HOME_PAGE,
+  IE_ARCHIVE_MONTH,
+  buildArchiveProxyUrl,
+  getArchivedHostsForPreload,
+  isArchivedIePage,
+  resolveLocalPage,
+} from "../localPages";
+import { getFavoriteIconSrc, resolveIeFavicon } from "../favicons";
 
 // Analytics event namespace for Internet Explorer events
 export const IE_ANALYTICS = {
@@ -231,6 +234,7 @@ function ErrorPage({
 
 // Add this constant for title truncation
 const MAX_TITLE_LENGTH = 50;
+const ARCHIVE_LOAD_TIMEOUT_MS = 25_000;
 
 // Debug helper to identify direct passthrough URLs
 const logDirectPassthrough = (url: string) => {
@@ -378,12 +382,49 @@ export function InternetExplorerAppComponent({
     setLanguage,
     setLocation,
     cachedYears,
-    isFetchingCachedYears,
     setTimeMachineViewOpen,
     fetchCachedYears,
   } = useInternetExplorerStore();
 
   const abortControllerRef = useRef<AbortController | null>(null);
+  const loadTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const clearLoadTimeout = useCallback(() => {
+    if (loadTimeoutRef.current) {
+      clearTimeout(loadTimeoutRef.current);
+      loadTimeoutRef.current = null;
+    }
+  }, []);
+
+  const startLoadTimeout = useCallback(
+    (targetUrl: string, targetYear: string) => {
+      clearLoadTimeout();
+      loadTimeoutRef.current = setTimeout(() => {
+        const state = useInternetExplorerStore.getState();
+        if (state.status !== "loading") return;
+        if (state.token !== navTokenRef.current) return;
+
+        track(IE_ANALYTICS.NAVIGATION_ERROR, {
+          url: targetUrl,
+          type: "timeout",
+          year: targetYear,
+        });
+        handleNavigationError(
+          {
+            error: true,
+            type: "connection_error",
+            status: 504,
+            message:
+              "The page is taking too long to load. The Wayback Machine may be busy.",
+            details:
+              "Internet Explorer stopped waiting after 25 seconds. Try Refresh or open the link in a new window.",
+          },
+          targetUrl
+        );
+      }, ARCHIVE_LOAD_TIMEOUT_MS);
+    },
+    [clearLoadTimeout, handleNavigationError]
+  );
   const [hasMoreToScroll] = useState(false);
   const [isUrlDropdownOpen, setIsUrlDropdownOpen] = useState(false);
   // Define suggestion type to reuse
@@ -499,33 +540,6 @@ export function InternetExplorerAppComponent({
   const { playElevatorMusic, stopElevatorMusic, playDingSound } =
     useTerminalSounds();
 
-  const currentYear = new Date().getFullYear();
-  const pastYears = [
-    "1000 BC",
-    "1 CE",
-    "500",
-    "800",
-    "1000",
-    "1200",
-    "1400",
-    "1600",
-    "1700",
-    "1800",
-    "1900",
-    "1910",
-    "1920",
-    "1930",
-    "1940",
-    "1950",
-    "1960",
-    "1970",
-    "1980",
-    "1985",
-    "1990",
-    ...Array.from({ length: currentYear - 1991 + 1 }, (_, i) =>
-      (1991 + i).toString()
-    ).filter((year) => parseInt(year) !== currentYear),
-  ].reverse();
   const futureYears = [
     "2150",
     "2200",
@@ -609,7 +623,8 @@ export function InternetExplorerAppComponent({
   useEffect(() => {
     let newTitle = "Internet Explorer";
     const baseTitle = currentPageTitle || url;
-    const isTimeTravelling = status === "loading" && year !== "current";
+    const isTimeTravelling =
+      status === "loading" && year !== "current" && !isArchivedIePage(url);
 
     if (isTimeTravelling) {
       const titleToUse =
@@ -658,19 +673,18 @@ export function InternetExplorerAppComponent({
     setDisplayTitle(newTitle);
   }, [status, currentPageTitle, finalUrl, url, year]);
 
-  const getWaybackUrl = async (targetUrl: string, year: string) => {
-    const now = new Date();
-    const month = String(now.getMonth() + 1).padStart(2, "0");
+  const getWaybackUrl = (targetUrl: string, year: string) => {
     const formattedUrl = targetUrl.startsWith("http")
       ? targetUrl
       : `https://${targetUrl}`;
     console.log(
-      `[IE] Using Wayback Machine URL for ${formattedUrl} in ${year}`
+      `[IE] Using Wayback proxy for ${formattedUrl} in ${year} (snapshot month ${IE_ARCHIVE_MONTH})`
     );
-    const themeParam = typeof currentTheme === "string" ? `&theme=${encodeURIComponent(currentTheme)}` : "";
-    return `/api/iframe-check?url=${encodeURIComponent(
-      formattedUrl
-    )}&year=${year}&month=${month}${themeParam}`;
+    return buildArchiveProxyUrl(
+      formattedUrl,
+      year,
+      useThemeStore.getState().current
+    );
   };
 
   // Ref to keep the most recent navigation token in sync without waiting for a render
@@ -746,6 +760,7 @@ export function InternetExplorerAppComponent({
       }
 
       clearErrorDetails();
+      clearLoadTimeout();
 
       setTimeout(() => {
         if (
@@ -789,13 +804,7 @@ export function InternetExplorerAppComponent({
             }
           }
 
-          const favicon = `https://www.google.com/s2/favicons?domain=${
-            new URL(
-              currentUrlForFallback.startsWith("http")
-                ? currentUrlForFallback
-                : `https://${currentUrlForFallback}`
-            ).hostname
-          }&sz=32`;
+          const favicon = resolveIeFavicon(currentUrlForFallback);
 
           track(IE_ANALYTICS.NAVIGATION_SUCCESS, {
             url: currentUrlForFallback,
@@ -867,7 +876,7 @@ export function InternetExplorerAppComponent({
   const handleNavigate = useCallback(
     async (
       targetUrlParam: string = localUrl || url,
-      targetYearParam: string = year,
+      requestedYearParam: string = year,
       forceRegenerate = false,
       currentHtmlContent: string | null = null
     ) => {
@@ -886,12 +895,6 @@ export function InternetExplorerAppComponent({
         iframeRef.current.src = "about:blank";
       }
 
-      const newMode =
-        targetYearParam === "current"
-          ? "now"
-          : parseInt(targetYearParam) > new Date().getFullYear()
-          ? "future"
-          : "past";
       const newToken = Date.now();
 
       // --- Trim the URL from input before navigating ---
@@ -899,6 +902,15 @@ export function InternetExplorerAppComponent({
       const urlToNavigate = (
         targetUrlParam === url ? url.trim() : targetUrlParam
       ).trim();
+      const targetYearParam = isArchivedIePage(urlToNavigate)
+        ? IE_FIXED_YEAR
+        : "current";
+      const newMode =
+        targetYearParam === "current"
+          ? "now"
+          : parseInt(targetYearParam) > new Date().getFullYear()
+          ? "future"
+          : "past";
       // Update store immediately so the input reflects the trimmed URL during loading
       setUrl(urlToNavigate);
       // --- End Trim ---
@@ -911,9 +923,29 @@ export function InternetExplorerAppComponent({
         url: urlToNavigate,
         year: targetYearParam,
         mode: newMode,
+        requestedYear: requestedYearParam,
       });
 
       navigateStart(urlToNavigate, targetYearParam, newMode, newToken);
+
+      const localPage = resolveLocalPage(urlToNavigate);
+      if (localPage) {
+        if (abortController.signal.aborted) return;
+        setFinalUrl(localPage.path);
+        if (iframeRef.current) {
+          iframeRef.current.dataset.navToken = newToken.toString();
+          iframeRef.current.src = localPage.path;
+        }
+        loadSuccess({
+          title: localPage.title,
+          finalUrl: localPage.path,
+          targetUrl: localPage.displayUrl,
+          targetYear: targetYearParam,
+          favicon: "/icons/default/ie.png",
+          addToHistory: true,
+        });
+        return;
+      }
 
       const normalizedTargetUrl = urlToNavigate.startsWith("http")
         ? urlToNavigate
@@ -963,9 +995,7 @@ export function InternetExplorerAppComponent({
                 // Refresh cached years to update the count
                 fetchCachedYears(normalizedTargetUrl);
 
-                const favicon = `https://www.google.com/s2/favicons?domain=${
-                  new URL(normalizedTargetUrl).hostname
-                }&sz=32`;
+                const favicon = resolveIeFavicon(normalizedTargetUrl);
                 loadSuccess({
                   aiGeneratedHtml: cleanHtml,
                   title: parsedTitle || normalizedTargetUrl,
@@ -1027,7 +1057,7 @@ export function InternetExplorerAppComponent({
 
           if (newMode === "past") {
             try {
-              const waybackUrl = await getWaybackUrl(
+              const waybackUrl = getWaybackUrl(
                 normalizedTargetUrl,
                 targetYearParam
               );
@@ -1107,6 +1137,9 @@ export function InternetExplorerAppComponent({
           if (iframeRef.current) {
             iframeRef.current.dataset.navToken = newToken.toString();
             iframeRef.current.src = urlToLoad;
+            if (newMode === "past" && parseInt(targetYearParam) > 1995) {
+              startLoadTimeout(urlToNavigate, targetYearParam);
+            }
           }
         }
       } catch (error) {
@@ -1148,6 +1181,8 @@ export function InternetExplorerAppComponent({
       setYear,
       setUrl,
       fetchCachedYears,
+      startLoadTimeout,
+      clearLoadTimeout,
     ]
   );
 
@@ -1410,7 +1445,7 @@ export function InternetExplorerAppComponent({
       }
       return "unknown.com";
     })();
-    const favIcon = `https://www.google.com/s2/favicons?domain=${favHostname}&sz=32`;
+    const favIcon = resolveIeFavicon(favHostname);
     addFavorite({
       title: newFavoriteTitle,
       url: favUrl,
@@ -1438,6 +1473,7 @@ export function InternetExplorerAppComponent({
   }, [handleNavigate, url, year]);
 
   const handleStop = useCallback(() => {
+    clearLoadTimeout();
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -1459,6 +1495,7 @@ export function InternetExplorerAppComponent({
     stopGeneration,
     clearErrorDetails,
     stopElevatorMusic,
+    clearLoadTimeout,
   ]);
 
   const handleGoToUrl = useCallback(() => {
@@ -1468,7 +1505,7 @@ export function InternetExplorerAppComponent({
   }, []);
 
   const handleHome = useCallback(() => {
-    handleNavigate("apple.com", "2002");
+    handleNavigate(IE_HOME_PAGE.displayUrl, IE_FIXED_YEAR);
   }, [handleNavigate]);
 
   // Use a ref to prevent duplicate initial navigations
@@ -1816,11 +1853,24 @@ export function InternetExplorerAppComponent({
       if (abortControllerRef.current) {
         abortControllerRef.current.abort();
       }
+      clearLoadTimeout();
       if (iframeRef.current) {
         iframeRef.current.src = "about:blank";
       }
     }
-  }, [isWindowOpen, stopElevatorMusic]);
+  }, [isWindowOpen, stopElevatorMusic, clearLoadTimeout]);
+
+  // Warm in-memory Wayback cache for known archive favorites (Google, Apple)
+  useEffect(() => {
+    if (!isWindowOpen) return;
+
+    const theme = useThemeStore.getState().current;
+    getArchivedHostsForPreload().forEach((host) => {
+      void fetch(
+        buildArchiveProxyUrl(`https://${host}`, IE_FIXED_YEAR, theme)
+      ).catch(() => {});
+    });
+  }, [isWindowOpen]);
 
   useEffect(() => {
     const container = favoritesContainerRef.current;
@@ -1962,15 +2012,12 @@ export function InternetExplorerAppComponent({
       canGoBack={historyIndex < history.length - 1}
       canGoForward={historyIndex > 0}
       onClearHistory={() => setClearHistoryDialogOpen(true)}
-      onOpenTimeMachine={() => setTimeMachineViewOpen(true)}
       onClose={onClose}
-      onEditFuture={() => setFutureSettingsDialogOpen(true)}
       language={language}
       location={location}
       year={year}
       onLanguageChange={setLanguage}
       onLocationChange={setLocation}
-      onYearChange={(newYear) => handleNavigate(url, newYear)}
       onSharePage={handleSharePage}
       skipInitialSound={skipInitialSound}
       instanceId={instanceId}
@@ -2294,90 +2341,6 @@ export function InternetExplorerAppComponent({
                         ))}
                       </div>
                     )}
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => setTimeMachineViewOpen(true)}
-                        disabled={
-                          isFetchingCachedYears || cachedYears.length <= 1
-                        }
-                        className={`h-7 w-7 absolute right-1 top-1/2 -translate-y-1/2 focus-visible:ring-0 focus-visible:ring-offset-0 ${
-                          cachedYears.length > 1
-                            ? ""
-                            : "opacity-50 cursor-not-allowed"
-                        }`}
-                        aria-label="Show cached versions (Time Machine)"
-                        style={{
-                          pointerEvents:
-                            cachedYears.length <= 1 ? "none" : "auto",
-                        }}
-                      >
-                        <History
-                          className={`h-4 w-4 ${
-                            cachedYears.length > 1
-                              ? "text-orange-500"
-                              : "text-neutral-400"
-                          }`}
-                        />
-                      </Button>
-                    </TooltipTrigger>
-                    {cachedYears.length > 1 && (
-                      <TooltipContent side="bottom">
-                        <p>
-                          {cachedYears.length} Time Node
-                          {cachedYears.length !== 1 ? "s" : ""}
-                        </p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Select
-                    value={year}
-                    onValueChange={(newYear) => handleNavigate(url, newYear)}
-                  >
-                    <SelectTrigger
-                      className={
-                        isXpTheme
-                          ? "!text-[11px]"
-                          : currentTheme === "macosx"
-                          ? "!text-[12px]"
-                          : "!text-[16px]"
-                      }
-                    >
-                      <SelectValue placeholder="Year" />
-                    </SelectTrigger>
-                    <SelectContent className="px-0">
-                      {futureYears.map((y) => (
-                        <SelectItem
-                          key={y}
-                          value={y}
-                          className="text-md h-6 px-3 active:bg-gray-900 active:text-white text-blue-600"
-                        >
-                          {y}
-                        </SelectItem>
-                      ))}
-                      <SelectItem
-                        value="current"
-                        className="text-md h-6 px-3 active:bg-gray-900 active:text-white"
-                      >
-                        Now
-                      </SelectItem>
-                      {pastYears.map((y) => (
-                        <SelectItem
-                          key={y}
-                          value={y}
-                          className={`text-md h-6 px-3 active:bg-gray-900 active:text-white ${
-                            parseInt(y) <= 1995 ? "text-blue-600" : ""
-                          }`}
-                        >
-                          {y}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
                 </div>
               </div>
               <div className="relative flex items-center">
@@ -2468,7 +2431,10 @@ export function InternetExplorerAppComponent({
                             }}
                           >
                             <img
-                              src={favorite.favicon || "/icons/ie-site.png"}
+                              src={getFavoriteIconSrc(
+                                favorite.url,
+                                favorite.favicon
+                              )}
                               alt="Site"
                               className="w-4 h-4 mr-1"
                               onError={(e) => {

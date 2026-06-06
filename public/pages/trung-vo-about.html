@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trung Vo — About Me</title>
+  <style>
+  body {
+    margin: 0;
+    padding: 0;
+    background: #000080 url("data:image/svg+xml,%3Csvg width='8' height='8' xmlns='http://www.w3.org/2000/svg'%3E%3Crect width='4' height='4' fill='%230000a0'/%3E%3Crect x='4' y='4' width='4' height='4' fill='%230000a0'/%3E%3C/svg%3E");
+    color: #000;
+    font-family: "Times New Roman", Times, serif;
+  }
+  .wrap {
+    max-width: 760px;
+    margin: 12px auto 24px;
+    padding: 0 8px;
+  }
+  .banner {
+    background: linear-gradient(180deg, #ffff00 0%, #ff9900 100%);
+    border: 3px ridge #fff;
+    text-align: center;
+    padding: 10px 8px 6px;
+  }
+  .banner h1 {
+    margin: 0;
+    font-family: "Comic Sans MS", "Comic Sans", cursive;
+    font-size: 28px;
+    color: #000080;
+    text-shadow: 1px 1px #fff;
+  }
+  .banner p {
+    margin: 4px 0 0;
+    font-size: 13px;
+    font-family: Arial, sans-serif;
+  }
+  .marquee-wrap {
+    background: #000;
+    border: 2px inset #808080;
+    margin: 8px 0;
+    padding: 2px 0;
+  }
+  marquee {
+    color: #00ff00;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+  }
+  .main {
+    background: #fff;
+    border: 3px ridge #c0c0c0;
+    padding: 12px;
+  }
+  .cols {
+    display: table;
+    width: 100%;
+  }
+  .col-left, .col-right {
+    display: table-cell;
+    vertical-align: top;
+  }
+  .col-left { width: 62%; padding-right: 10px; }
+  .col-right { width: 38%; }
+  h2 {
+    font-family: Arial, sans-serif;
+    font-size: 16px;
+    color: #000080;
+    border-bottom: 2px solid #ff0000;
+    margin: 0 0 8px;
+    padding-bottom: 2px;
+  }
+  p, li {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .box {
+    border: 2px inset #c0c0c0;
+    background: #ffffcc;
+    padding: 8px;
+    margin-bottom: 10px;
+    font-size: 13px;
+  }
+  .status {
+    display: inline-block;
+    background: #00cc00;
+    color: #003300;
+    font-family: Arial, sans-serif;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 6px;
+    border: 1px solid #006600;
+  }
+  .links a {
+    display: block;
+    color: #0000ee;
+    font-size: 13px;
+    margin: 4px 0;
+  }
+  .links a:visited { color: #551a8b; }
+  .counter {
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    background: #000;
+    color: #00ff00;
+    padding: 4px 8px;
+    border: 2px inset #808080;
+    text-align: center;
+    margin-top: 8px;
+  }
+  .footer {
+    text-align: center;
+    font-size: 11px;
+    color: #ffff99;
+    margin-top: 10px;
+    font-family: Arial, sans-serif;
+  }
+  .blink { animation: blink 1s step-end infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  table.spec { width: 100%; border-collapse: collapse; font-size: 13px; }
+  table.spec td { border: 1px solid #999; padding: 4px 6px; }
+  table.spec td:first-child { background: #e8e8ff; font-weight: bold; width: 38%; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="banner">
+      <h1>★ Welcome to Trung Vo's Home Page ★</h1>
+      <p>Product Designer · Builder · Bay Area, CA</p>
+    </div>
+
+    <div class="marquee-wrap">
+      <marquee scrollamount="4">
+        *** You are visitor #48,291 — Thanks for stopping by! *** Currently available for freelance work *** IBM watsonx.data by day, pixels by night ***
+      </marquee>
+    </div>
+
+    <div class="main">
+      <div class="cols">
+        <div class="col-left">
+          <h2>About Me</h2>
+          <p>
+            Hi! I'm <strong>Trung Vo</strong>, a product designer who likes building
+            things on the web. I work on <strong>watsonx.data</strong> at IBM in the
+            Bay Area, and I spend a lot of time thinking about how AI can feel
+            human, trustworthy, and useful.
+          </p>
+          <p>
+            This site is part of my portfolio at
+            <a href="https://trungvo.xyz" target="_blank" rel="noopener">trungvo.xyz</a>
+            — part case studies, part playground, part love letter to old computers.
+          </p>
+
+          <div class="box">
+            <span class="status">● AVAILABLE</span>
+            &nbsp; Open to freelance &amp; interesting collaborations.
+          </div>
+
+          <h2>What I Work With</h2>
+          <table class="spec">
+            <tr><td>Design</td><td>Product UX, design systems, data viz, AI-native flows</td></tr>
+            <tr><td>Stack</td><td>Next.js, React, TypeScript, Three.js, Figma</td></tr>
+            <tr><td>Focus</td><td>Enterprise data tools, 3D web, portfolio experiments</td></tr>
+            <tr><td>Location</td><td>San Francisco Bay Area, California</td></tr>
+          </table>
+
+          <h2>Experience</h2>
+          <ul>
+            <li><strong>IBM</strong> — Product Designer, watsonx.data</li>
+            <li><strong>Zeme</strong> — Founding Product Designer (0→1 rental startup)</li>
+            <li><strong>Suncoast Venture</strong> — UX Designer</li>
+          </ul>
+        </div>
+
+        <div class="col-right">
+          <h2>Links</h2>
+          <div class="links box">
+            <a href="https://trungvo.xyz" target="_blank" rel="noopener">🏠 Portfolio (trungvo.xyz)</a>
+            <a href="https://www.linkedin.com/in/trung--vo" target="_blank" rel="noopener">💼 LinkedIn</a>
+            <a href="mailto:trungvanvo.823@gmail.com">✉️ Email Me</a>
+          </div>
+
+          <h2>Fun Facts</h2>
+          <div class="box">
+            <p style="margin:0 0 6px">🎮 This desktop is TrungvOS — a Windows 98 sim I hacked together.</p>
+            <p style="margin:0 0 6px">🖥️ Hover the CRT monitor on my portfolio for a surprise.</p>
+            <p style="margin:0" class="blink">🚧 Always under construction</p>
+          </div>
+
+          <div class="counter">
+            VISITORS: 048291<br />
+            LAST UPDATED: June 2005
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <p class="footer">
+      Best viewed in Internet Explorer 5+ at 800×600 · Made with Notepad and stubbornness
+    </p>
+  </div>
+</body>
+</html>

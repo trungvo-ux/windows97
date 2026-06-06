@@ -10,6 +10,7 @@ import {
   DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import { AppProps } from "../../base/types";
+import { getFavoriteIconSrc } from "../favicons";
 import { MenuBar } from "@/components/layout/MenuBar";
 import {
   Favorite,
@@ -89,7 +90,7 @@ const renderFavoriteItem = (
         className="text-md h-6 px-3 active:bg-gray-900 active:text-white flex items-center gap-2"
       >
         <img
-          src={favorite.favicon || "/icons/ie-site.png"}
+          src={getFavoriteIconSrc(favorite.url, favorite.favicon)}
           alt=""
           className="w-4 h-4"
           onError={(e) => {
@@ -692,7 +693,7 @@ export function InternetExplorerMenuBar({
                   className="text-md h-6 px-3 active:bg-gray-900 active:text-white flex items-center gap-2"
                 >
                   <img
-                    src={entry.favicon || "/icons/ie-site.png"}
+                    src={getFavoriteIconSrc(entry.url, entry.favicon)}
                     alt=""
                     className="w-4 h-4"
                     onError={(e) => {

@@ -16,7 +16,6 @@ import { useFinderStore } from "@/stores/useFinderStore";
 import { useFilesStore } from "@/stores/useFilesStore";
 import { useIsPhone } from "@/hooks/useIsPhone";
 import type { AppInstance } from "@/stores/useAppStore";
-import type { AppletViewerInitialData } from "@/apps/applet-viewer";
 import { RightClickMenu } from "@/components/ui/right-click-menu";
 import { ConfirmDialog } from "@/components/dialogs/ConfirmDialog";
 import {
@@ -39,7 +38,6 @@ function MacDock() {
     }));
 
   const launchApp = useLaunchApp();
-  const files = useFilesStore((s) => s.items);
   const fileStore = useFilesStore();
   const trashIcon = useFilesStore(
     (s) => s.items["/Trash"]?.icon || "/icons/trash-empty.png"
@@ -62,53 +60,9 @@ function MacDock() {
   );
   const isTrashEmpty = trashItems.length === 0;
 
-  // Helper to get applet info (icon and name) from instance
-  const getAppletInfo = useCallback(
-    (instance: AppInstance) => {
-      const initialData = instance.initialData as
-        | AppletViewerInitialData
-        | undefined;
-      const path = initialData?.path || "";
-      const file = files[path];
-
-      // Get filename from path for label
-      const getFileName = (path: string): string => {
-        const parts = path.split("/");
-        const fileName = parts[parts.length - 1];
-        return fileName.replace(/\.(html|app)$/i, "");
-      };
-
-      const label = path ? getFileName(path) : "Applet Store";
-
-      // Check if the file icon is an emoji (not a file path)
-      const fileIcon = file?.icon;
-      const isEmojiIcon =
-        fileIcon &&
-        !fileIcon.startsWith("/") &&
-        !fileIcon.startsWith("http") &&
-        fileIcon.length <= 10;
-
-      // If no path (applet store), use the applet viewer icon
-      // Otherwise, use file icon if emoji, or fallback to package emoji
-      let icon: string;
-      let isEmoji: boolean;
-      if (!path) {
-        // Applet store - use app icon
-        icon = getAppIconPath("applet-viewer");
-        isEmoji = false;
-      } else {
-        icon = isEmojiIcon ? fileIcon : "📦";
-        isEmoji = true;
-      }
-
-      return { icon, label, isEmoji };
-    },
-    [files]
-  );
-
   // Pinned apps on the left side (in order)
   const pinnedLeft: AppId[] = useMemo(
-    () => ["finder", "chats", "internet-explorer"] as AppId[],
+    () => ["finder", "internet-explorer"] as AppId[],
     []
   );
 
@@ -130,26 +84,12 @@ function MacDock() {
         openByApp[i.appId].push(i);
       });
 
-    // For each app, either add individual applet instances or a single app entry
     Object.entries(openByApp).forEach(([appId, instancesList]) => {
-      if (appId === "applet-viewer") {
-        // Add each applet instance separately
-        instancesList.forEach((inst) => {
-          items.push({
-            type: "applet",
-            appId: inst.appId as AppId,
-            instanceId: inst.instanceId,
-            sortKey: inst.createdAt || 0,
-          });
-        });
-      } else {
-        // Add a single entry for this app
-        items.push({
-          type: "app",
-          appId: appId as AppId,
-          sortKey: instancesList[0]?.createdAt ?? 0,
-        });
-      }
+      items.push({
+        type: "app",
+        appId: appId as AppId,
+        sortKey: instancesList[0]?.createdAt ?? 0,
+      });
     });
 
     // Sort by creation time to keep a stable order
@@ -600,40 +540,20 @@ function MacDock() {
                 );
               })}
 
-              {/* Open apps and applet instances dynamically (excluding pinned) */}
+              {/* Open apps dynamically (excluding pinned) */}
               {openItems.map((item) => {
-                if (item.type === "applet" && item.instanceId) {
-                  // Render individual applet instance
-                  const instance = instances[item.instanceId];
-                  if (!instance) return null;
-
-                  const { icon, label, isEmoji } = getAppletInfo(instance);
-                  return (
-                    <IconButton
-                      key={item.instanceId}
-                      label={label}
-                      icon={icon}
-                      idKey={item.instanceId}
-                      onClick={() => bringInstanceToForeground(item.instanceId!)}
-                      showIndicator
-                      isEmoji={isEmoji}
-                    />
-                  );
-                } else {
-                  // Render regular app
-                  const icon = getAppIconPath(item.appId);
-                  const label = appRegistry[item.appId]?.name ?? item.appId;
-                  return (
-                    <IconButton
-                      key={item.appId}
-                      label={label}
-                      icon={icon}
-                      idKey={item.appId}
-                      onClick={() => focusMostRecentInstanceOfApp(item.appId)}
-                      showIndicator
-                    />
-                  );
-                }
+                const icon = getAppIconPath(item.appId);
+                const label = appRegistry[item.appId]?.name ?? item.appId;
+                return (
+                  <IconButton
+                    key={item.appId}
+                    label={label}
+                    icon={icon}
+                    idKey={item.appId}
+                    onClick={() => focusMostRecentInstanceOfApp(item.appId)}
+                    showIndicator
+                  />
+                );
               })}
 
               {/* Divider between open apps and Applications/Trash */}

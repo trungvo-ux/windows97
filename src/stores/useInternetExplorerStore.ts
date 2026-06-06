@@ -1,5 +1,9 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import {
+  patchClassicFavicons,
+  resolveIeFavicon,
+} from "@/apps/internet-explorer/favicons";
 
 // Define types
 export interface Favorite {
@@ -64,9 +68,11 @@ export type LocationOption =
   | "australia"
   | "russia";
 
-// Default constants
-export const DEFAULT_URL = "https://apple.com";
-export const DEFAULT_YEAR = "2001";
+// Default constants — ordinary IE navigation uses the current web; selected
+// retro destinations can opt into the 2005 WebArchive path.
+export const IE_FIXED_YEAR = "2005";
+export const DEFAULT_URL = "trungvo.xyz";
+export const DEFAULT_YEAR = "current";
 
 export const DEFAULT_TIMELINE: { [year: string]: string } = {
   "2030":
@@ -105,235 +111,30 @@ export const DEFAULT_TIMELINE: { [year: string]: string } = {
 
 export const DEFAULT_FAVORITES: Favorite[] = [
   {
+    title: "Trung Vo",
+    url: "https://trungvo.xyz",
+    favicon: "/icons/default/ie.png",
+    year: DEFAULT_YEAR,
+    isDirectory: false,
+  },
+  {
+    title: "Google",
+    url: "https://google.com",
+    favicon: "/icons/ie-favicons/google-2007.png",
+    year: IE_FIXED_YEAR,
+    isDirectory: false,
+  },
+  {
     title: "Apple",
     url: "https://apple.com",
-    favicon: "https://www.google.com/s2/favicons?domain=apple.com&sz=32",
-    year: "2001",
+    favicon: "/icons/ie-favicons/apple-2007.png",
+    year: IE_FIXED_YEAR,
     isDirectory: false,
-  },
-  {
-    title: "Ryo",
-    url: "https://ryo.lu",
-    favicon: "https://www.google.com/s2/favicons?domain=ryo.lu&sz=32",
-    year: "current",
-    isDirectory: false,
-  },
-  {
-    title: "NewJeans",
-    url: "https://newjeans.jp",
-    favicon: "https://www.google.com/s2/favicons?domain=newjeans.jp&sz=32",
-    year: "current",
-    isDirectory: false,
-  },
-  {
-    title: "Friends",
-    isDirectory: true, // Mark as directory
-    children: [
-      {
-        title: "Ian",
-        url: "https://shaoruu.io",
-        favicon: "https://www.google.com/s2/favicons?domain=shaoruu.io&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Long",
-        url: "https://os.rocorgi.wang",
-        favicon:
-          "https://www.google.com/s2/favicons?domain=os.rocorgi.wang&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Maya",
-        url: "https://mayabakir.com",
-        favicon:
-          "https://www.google.com/s2/favicons?domain=mayabakir.com&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Modi",
-        url: "https://www.akm.io",
-        favicon: "https://www.google.com/s2/favicons?domain=www.akm.io&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Sam",
-        url: "https://www.samuelcatania.com",
-        favicon:
-          "https://www.google.com/s2/favicons?domain=www.samuelcatania.com&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Stephen",
-        url: "https://wustep.me",
-        favicon: "https://www.google.com/s2/favicons?domain=wustep.me&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Theo",
-        url: "https://tmb.sh",
-        favicon: "https://www.google.com/s2/favicons?domain=tmb.sh&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Tyler",
-        url: "https://tyler.cafe",
-        favicon: "https://www.google.com/s2/favicons?domain=tyler.cafe&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Andrew",
-        url: "https://www.andrewl.ee",
-        favicon:
-          "https://www.google.com/s2/favicons?domain=www.andrewl.ee&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Ekin",
-        url: "https://www.ekinoflazer.com",
-        favicon:
-          "https://www.google.com/s2/favicons?domain=www.ekinoflazer.com&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Lucas",
-        url: "https://www.lucasn.com",
-        favicon:
-          "https://www.google.com/s2/favicons?domain=www.lucasn.com&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-    ],
-  },
-  // Work Folder
-  {
-    title: "Work",
-    isDirectory: true, // Mark as directory
-    children: [
-      {
-        title: "Cursor",
-        url: "https://cursor.sh",
-        favicon: "https://www.google.com/s2/favicons?domain=cursor.com&sz=32",
-        year: "1992",
-        isDirectory: false,
-      },
-      {
-        title: "Notion",
-        url: "https://notion.com",
-        favicon: "https://www.google.com/s2/favicons?domain=notion.com&sz=32",
-        year: "1800",
-        isDirectory: false,
-      },
-      {
-        title: "Stripe",
-        url: "https://stripe.com",
-        favicon: "https://www.google.com/s2/favicons?domain=stripe.com&sz=32",
-        year: "2018",
-        isDirectory: false,
-      },
-    ],
-  },
-  // Tools Folder
-  {
-    title: "Tools",
-    isDirectory: true, // Mark as directory
-    children: [
-      {
-        title: "Baby Cursor",
-        url: "https://baby-cursor.ryo.lu",
-        favicon: "https://www.google.com/s2/favicons?domain=ryo.lu&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "HyperCards",
-        url: "https://hcsimulator.com",
-        favicon:
-          "https://www.google.com/s2/favicons?domain=hcsimulator.com&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-    ],
-  },
-  // Sites Folder
-  {
-    title: "Sites",
-    isDirectory: true, // Mark as directory
-    children: [
-      {
-        title: "Disney",
-        url: "https://disney.com",
-        favicon: "https://www.google.com/s2/favicons?domain=disney.com&sz=32",
-        year: "1997",
-        isDirectory: false,
-      },
-      {
-        title: "GeoCities",
-        url: "https://geocities.restorativland.org", // Example archive/representation
-        favicon:
-          "https://www.google.com/s2/favicons?domain=geocities.com&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Microsoft",
-        url: "https://microsoft.com",
-        favicon:
-          "https://www.google.com/s2/favicons?domain=microsoft.com&sz=32",
-        year: "1996",
-        isDirectory: false,
-      },
-      {
-        title: "Netscape",
-        url: "https://netscape.com", // Might redirect or be an archive
-        favicon: "https://www.google.com/s2/favicons?domain=netscape.com&sz=32",
-        year: "1996",
-        isDirectory: false,
-      },
-      {
-        title: "NYTimes",
-        url: "https://nytimes.com",
-        favicon: "https://www.google.com/s2/favicons?domain=nytimes.com&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Wikipedia",
-        url: "https://en.wikipedia.org/wiki",
-        favicon:
-          "https://www.google.com/s2/favicons?domain=en.wikipedia.org&sz=32",
-        year: "current",
-        isDirectory: false,
-      },
-      {
-        title: "Google",
-        url: "https://google.com",
-        favicon: "https://www.google.com/s2/favicons?domain=google.com&sz=32",
-        year: "1999",
-        isDirectory: false,
-      },
-      {
-        title: "Space Jam",
-        url: "https://www.spacejam.com/index.cgi",
-        favicon: "https://www.google.com/s2/favicons?domain=spacejam.com&sz=32",
-        year: "1996",
-        isDirectory: false,
-      },
-    ],
   },
 ];
 
 // Define the current version for the store
-const CURRENT_IE_STORE_VERSION = 3;
+const CURRENT_IE_STORE_VERSION = 8;
 
 // Helper function to classify year into navigation mode
 function classifyYear(year: string): NavigationMode {
@@ -619,11 +420,7 @@ export const useInternetExplorerStore = create<InternetExplorerStore>()(
             const newEntry: HistoryEntry = {
               url: normalizedTargetUrl, // Use normalized URL
               title: historyTitle,
-              favicon:
-                favicon ||
-                `https://www.google.com/s2/favicons?domain=${getHostname(
-                  targetUrl
-                )}&sz=32`,
+              favicon: favicon || resolveIeFavicon(targetUrl),
               year: targetYear,
               timestamp: Date.now(),
             };
@@ -849,10 +646,27 @@ export const useInternetExplorerStore = create<InternetExplorerStore>()(
           console.log(
             `Migrating Internet Explorer store from version ${version} to ${CURRENT_IE_STORE_VERSION}`
           );
+          const previousUrl =
+            typeof state?.url === "string" ? state.url.replace(/^https?:\/\//, "") : "";
+          const shouldResetHome =
+            !previousUrl ||
+            previousUrl === "apple.com" ||
+            previousUrl === "www.apple.com";
           state = {
             ...getInitialState(),
+            year: DEFAULT_YEAR,
+            favorites: DEFAULT_FAVORITES,
+            ...(shouldResetHome
+              ? {}
+              : {
+                  url: state.url,
+                  history: state.history,
+                  timelineSettings: state.timelineSettings,
+                  language: state.language,
+                  location: state.location,
+                }),
           };
-          console.log("IE Store migration applied, resetting to defaults.");
+          console.log("IE Store migration applied.");
         }
 
         const initialStateDefaults = getInitialState();
@@ -884,9 +698,29 @@ export const useInternetExplorerStore = create<InternetExplorerStore>()(
         finalState.history = Array.isArray(finalState.history)
           ? finalState.history.slice(0, 50)
           : [];
-        finalState.favorites = Array.isArray(finalState.favorites)
+        const persistedFavorites = Array.isArray(finalState.favorites)
           ? finalState.favorites
-          : DEFAULT_FAVORITES;
+          : [];
+        finalState.favorites = patchClassicFavicons([
+          ...persistedFavorites,
+          ...DEFAULT_FAVORITES.filter(
+            (defaultFavorite) =>
+              defaultFavorite.url &&
+              !persistedFavorites.some(
+                (favorite) =>
+                  favorite &&
+                  typeof favorite === "object" &&
+                  "url" in favorite &&
+                  favorite.url === defaultFavorite.url
+              )
+          ),
+        ] as Favorite[]);
+
+        if (Array.isArray(finalState.history)) {
+          finalState.history = patchClassicFavicons(
+            finalState.history as HistoryEntry[]
+          );
+        }
 
         return finalState as InternetExplorerStore;
       },

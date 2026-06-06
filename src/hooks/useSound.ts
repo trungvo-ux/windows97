@@ -42,6 +42,18 @@ export const preloadSounds = async (sounds: string[]) => {
   await Promise.all(sounds.map(preloadSound));
 };
 
+interface PlaySoundOptions {
+  suppressError?: boolean;
+}
+
+function isPlaySoundOptions(value: unknown): value is PlaySoundOptions {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "suppressError" in value
+  );
+}
+
 export function useSound(soundPath: string, volume: number = 0.3) {
   const gainNodeRef = useRef<GainNode | null>(null);
   // Reactively track global UI volume
@@ -63,10 +75,12 @@ export function useSound(soundPath: string, volume: number = 0.3) {
     };
   }, [volume, uiVolume, masterVolume]);
 
-  const play = useCallback(async () => {
+  const play = useCallback(async (options?: unknown): Promise<boolean> => {
+    const playOptions = isPlaySoundOptions(options) ? options : undefined;
+
     // Check if UI sounds are enabled via global store
     if (!useAppStore.getState().uiSoundsEnabled) {
-      return;
+      return false;
     }
 
     try {
@@ -103,7 +117,7 @@ export function useSound(soundPath: string, volume: number = 0.3) {
       // If too many concurrent sources are active, skip to avoid audio congestion
       if (activeSources.size > 32) {
         console.debug("Skipping sound – too many concurrent sources");
-        return;
+        return false;
       }
 
       // Play the sound
@@ -116,8 +130,12 @@ export function useSound(soundPath: string, volume: number = 0.3) {
       source.onended = () => {
         activeSources.delete(source);
       };
+      return true;
     } catch (error) {
-      console.error("Error playing sound:", error);
+      if (!playOptions?.suppressError) {
+        console.error("Error playing sound:", error);
+      }
+      return false;
     }
   }, [volume, soundPath, uiVolume, masterVolume]);
 

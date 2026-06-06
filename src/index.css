@@ -214,6 +214,34 @@ input.terminal-input[type="text"]:focus {
   box-shadow: none !important;
 }
 
+/* Classic CMD / MS-DOS prompt terminal */
+.terminal-cmd {
+  --cmd-bg: #000000;
+  --cmd-text: #c0c0c0;
+  --cmd-prompt: #01ff01;
+  --cmd-dim: #808080;
+  --cmd-bright: #ffffff;
+  --cmd-error: #ff5555;
+  background: var(--cmd-bg);
+  color: var(--cmd-text);
+  font-family: "Consolas", "Courier New", monospace;
+}
+.terminal-cmd .cmd-prompt { color: var(--cmd-prompt); }
+.terminal-cmd .cmd-dim { color: var(--cmd-dim); }
+.terminal-cmd .cmd-bright { color: var(--cmd-bright); }
+.terminal-cmd .cmd-error { color: var(--cmd-error); }
+.terminal-cmd input.terminal-input {
+  color: var(--cmd-text);
+  caret-color: var(--cmd-prompt);
+}
+.terminal-cmd .gradient-spin {
+  animation: cmd-spin 4s ease-in-out infinite;
+}
+@keyframes cmd-spin {
+  0%, 100% { color: var(--cmd-dim); }
+  50% { color: var(--cmd-bright); }
+}
+
 /* Piano key override styles to prevent XP/98 theme button interference */
 button.piano-key {
   font-size: inherit !important;
@@ -736,6 +764,246 @@ button.piano-key.piano-key[class*="bg-[#ff33ff]"] {
 
 .animate-fade-in {
   animation: fade-in 0.3s ease-out;
+}
+
+/* ------------------------------------------------------------------------- */
+/* Windows 98 boot sequence                                                   */
+/* ------------------------------------------------------------------------- */
+
+.win98-boot {
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  font-family: "Courier New", Courier, monospace;
+  image-rendering: pixelated;
+  overflow: hidden;
+}
+
+.win98-boot--bios {
+  background: #000;
+  color: #c0c0c0;
+}
+
+.win98-boot--splash {
+  background: #87ceeb url("/wallpapers/win98-boot-splash.png") center center / cover
+    no-repeat;
+}
+
+.win98-boot--desktop {
+  background: #008080;
+  animation: win98-boot-fade-out 1s linear forwards;
+  pointer-events: none;
+}
+
+@keyframes win98-boot-fade-out {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.win98-boot__crt {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.12) 0px,
+    rgba(0, 0, 0, 0.12) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  animation: win98-boot-flicker 0.12s steps(2, end) infinite;
+}
+
+@keyframes win98-boot-flicker {
+  0%,
+  100% {
+    opacity: 0.18;
+  }
+  50% {
+    opacity: 0.28;
+  }
+}
+
+.win98-boot__bios {
+  position: relative;
+  z-index: 1;
+  padding: 24px;
+  font-size: 14px;
+  line-height: 1.35;
+  white-space: pre-wrap;
+}
+
+.win98-boot__cursor {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  width: 8px;
+  height: 14px;
+  background: #c0c0c0;
+  animation: win98-boot-blink 1s steps(1, end) infinite;
+}
+
+@keyframes win98-boot-blink {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.win98-boot__splash {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  height: 100%;
+  padding-bottom: 56px;
+  gap: 10px;
+}
+
+.win98-boot__status {
+  color: #fff;
+  font-family: Tahoma, "MS Sans Serif", "Pixelated MS Sans Serif", sans-serif;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-shadow: 1px 1px 0 #000;
+}
+
+.win98-boot__loading-track {
+  display: flex;
+  gap: 2px;
+  padding: 2px 3px;
+  background: #000080;
+  border: 1px solid #fff;
+  box-shadow: 1px 1px 0 #000;
+}
+
+.win98-boot__loading-segment {
+  width: 10px;
+  height: 14px;
+  flex-shrink: 0;
+  background: #000080;
+  animation: win98-boot-segment-fill 0.001s linear forwards;
+}
+
+@keyframes win98-boot-segment-fill {
+  to {
+    background: #1084d0;
+  }
+}
+
+.win98-boot__desktop {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+}
+
+.win98-boot__taskbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 30px;
+  background: #c0c0c0;
+  border-top: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  padding: 2px 4px;
+  gap: 4px;
+  animation: win98-boot-taskbar-in 0.4s steps(4, end) forwards;
+}
+
+@keyframes win98-boot-taskbar-in {
+  0% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.win98-boot__start {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: 22px;
+  padding: 0 8px 0 4px;
+  background: #c0c0c0;
+  border: 2px solid;
+  border-color: #fff #404040 #404040 #fff;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  animation: win98-boot-start-in 0.3s steps(3, end) 0.2s both;
+}
+
+@keyframes win98-boot-start-in {
+  0% {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.win98-boot__start-flag {
+  width: 14px;
+  height: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(2, 1fr);
+}
+
+.win98-boot__start-flag span:nth-child(1) {
+  background: #ff0000;
+}
+.win98-boot__start-flag span:nth-child(2) {
+  background: #00ff00;
+}
+.win98-boot__start-flag span:nth-child(3) {
+  background: #0000ff;
+}
+.win98-boot__start-flag span:nth-child(4) {
+  background: #ffff00;
+}
+
+.win98-boot__tray {
+  margin-left: auto;
+  height: 22px;
+  min-width: 56px;
+  padding: 0 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid;
+  border-color: #808080 #fff #fff #808080;
+  background: #c0c0c0;
+  font-family: Tahoma, "MS Sans Serif", sans-serif;
+  font-size: 11px;
+  animation: win98-boot-tray-in 0.3s steps(3, end) 0.35s both;
+}
+
+@keyframes win98-boot-tray-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
 }
 
 /* ------------------------------------------------------------------------- */

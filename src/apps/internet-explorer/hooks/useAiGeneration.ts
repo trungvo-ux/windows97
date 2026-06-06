@@ -8,6 +8,7 @@ import {
   LocationOption,
 } from "@/stores/useInternetExplorerStore";
 import { useAppStore } from "@/stores/useAppStore";
+import { resolveIeFavicon } from "../favicons";
 
 interface UseAiGenerationProps {
   onLoadingChange?: (isLoading: boolean) => void;
@@ -170,9 +171,7 @@ export function useAiGeneration({
         console.warn("Error parsing URL for fallback title:", e);
       }
 
-      const favicon = `https://www.google.com/s2/favicons?domain=${
-        new URL(url.startsWith("http") ? url : `https://${url}`).hostname
-      }&sz=32`;
+      const favicon = resolveIeFavicon(url);
 
       // Update the store with the final HTML, title, and history info
       loadSuccess({

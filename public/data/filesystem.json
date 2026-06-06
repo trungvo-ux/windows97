@@ -40,14 +40,6 @@
       "status": "active"
     },
     {
-      "path": "/Videos",
-      "name": "Videos",
-      "isDirectory": true,
-      "type": "directory-virtual",
-      "icon": "/icons/default/movies.png",
-      "status": "active"
-    },
-    {
       "path": "/Sites",
       "name": "Sites",
       "isDirectory": true,
