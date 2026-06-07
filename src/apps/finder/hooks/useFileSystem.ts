@@ -1600,9 +1600,7 @@ export function useFileSystem(
               // For default files, use a date in the past
               const isDefaultFile = [
                 "/Documents/README.md",
-                "/Documents/Quick Tips.md",
                 "/Images/steve-jobs.png",
-                "/Images/susan-kare.png",
               ].includes(item.path);
 
               const baseTime = isDefaultFile

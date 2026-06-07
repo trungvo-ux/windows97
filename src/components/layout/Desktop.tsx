@@ -736,7 +736,13 @@ export function Desktop({
           }
         >
           <FileIcon
-            name={isXpTheme ? "My Computer" : "Macintosh HD"}
+            name={
+              currentTheme === "win98"
+                ? "Windows 98"
+                : isXpTheme
+                ? "My Computer"
+                : "Macintosh HD"
+            }
             isDirectory={true}
             icon={
               isXpTheme ? "/icons/default/pc.png" : "/icons/default/disk.png"

@@ -469,102 +469,30 @@ export function FinderAppComponent({
   ) => {
     const file = e.target.files?.[0];
     if (file) {
-      // Check if we're in Applets directory
-      const isAppletsDir = currentPath === "/Applets";
-
-      // Accept different file types based on current directory
-      if (isAppletsDir) {
-        // In Applets: accept .app and .html files
-        if (
-          !file.name.endsWith(".app") &&
-          !file.name.endsWith(".html") &&
-          !file.name.endsWith(".htm")
-        ) {
-          toast.error("Invalid file type", {
-            description: "Only .app and .html files can be imported to Applets",
-          });
-          e.target.value = "";
-          return;
-        }
-      } else {
-        // In other directories: accept text and markdown files
-        if (!file.type.startsWith("text/") && !file.name.endsWith(".md")) {
-          e.target.value = "";
-          return;
-        }
+      if (!file.type.startsWith("text/") && !file.name.endsWith(".md")) {
+        e.target.value = "";
+        return;
       }
 
       try {
         const text = await file.text();
-        let fileName = file.name;
+        const fileName = file.name;
+        const basePath = currentPath === "/" ? "" : currentPath;
+        const filePath = `${basePath}/${fileName}`;
 
-        // Handle applet files
-        if (isAppletsDir) {
-          // Extract emoji from filename for use as icon
-          const emojiRegex =
-            /^([\u{1F300}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}\u{1F000}-\u{1F02F}\u{1F0A0}-\u{1F0FF}\u{1F100}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{1FA00}-\u{1FA6F}\u{1FA70}-\u{1FAFF}\u{2300}-\u{23FF}\u{2B50}\u{2B55}\u{3030}\u{303D}\u{3297}\u{3299}]+)\s*/u;
-          const match = fileName.match(emojiRegex);
-          const emoji = match ? match[1] : null;
-          const remainingText = match
-            ? fileName.slice(match[0].length)
-            : fileName;
+        await saveFile({
+          name: fileName,
+          path: filePath,
+          content: text,
+        });
 
-          // Use remaining text as filename
-          fileName = remainingText;
-
-          // Convert to .app extension if needed
-          if (fileName.endsWith(".html") || fileName.endsWith(".htm")) {
-            fileName = fileName.replace(/\.(html|htm)$/i, ".app");
-          } else if (!fileName.endsWith(".app")) {
-            fileName = `${fileName}.app`;
-          }
-
-          const filePath = `/Applets/${fileName}`;
-
-          await saveFile({
+        const event = new CustomEvent("fileUpdated", {
+          detail: {
             name: fileName,
             path: filePath,
-            content: text,
-            type: "html",
-            icon: emoji || undefined,
-          });
-
-          // Notify file was added
-          const event = new CustomEvent("saveFile", {
-            detail: {
-              name: fileName,
-              path: filePath,
-              content: text,
-              icon: emoji || undefined,
-            },
-          });
-          window.dispatchEvent(event);
-
-          toast.success("Applet imported!", {
-            description: `${fileName} saved to /Applets${
-              emoji ? ` with ${emoji} icon` : ""
-            }`,
-          });
-        } else {
-          // Handle regular text files
-          const basePath = currentPath === "/" ? "" : currentPath;
-          const filePath = `${basePath}/${fileName}`;
-
-          await saveFile({
-            name: fileName,
-            path: filePath,
-            content: text,
-          });
-
-          // Notify file was added
-          const event = new CustomEvent("fileUpdated", {
-            detail: {
-              name: fileName,
-              path: filePath,
-            },
-          });
-          window.dispatchEvent(event);
-        }
+          },
+        });
+        window.dispatchEvent(event);
 
         // Clear the input
         e.target.value = "";
@@ -943,15 +871,17 @@ export function FinderAppComponent({
         type="file"
         ref={fileInputRef}
         className="hidden"
-        accept={
-          currentPath === "/Applets" ? ".app,.html,.htm" : ".txt,.md,text/*"
-        }
+        accept=".txt,.md,text/*"
         onChange={handleFileInputChange}
       />
       <WindowFrame
         title={
           currentPath === "/"
-            ? "Macintosh HD"
+            ? currentTheme === "win98"
+              ? "Windows 98"
+              : currentTheme === "xp"
+              ? "My Computer"
+              : "Macintosh HD"
             : (() => {
                 // Get the last path segment and decode it
                 const lastSegment =

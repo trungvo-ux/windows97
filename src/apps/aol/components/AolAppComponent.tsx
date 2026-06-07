@@ -24,7 +24,7 @@ interface AolPanel {
 const dialSteps = [
   "Opening modem...",
   "Dialing...",
-  "Verifying username and password...",
+  "Verifying username...",
   "Establishing connection...",
   "Connected",
 ] as const;
@@ -399,8 +399,6 @@ function BuddyListPanel({
 
 function SignOnScreen({ onSignOn }: { onSignOn: () => void }) {
   const [memberName, setMemberName] = useState("TrungVo98");
-  const [password, setPassword] = useState("hunter2");
-  const [savePassword, setSavePassword] = useState(true);
 
   return (
     <div className="flex h-full items-center justify-center bg-[#008080] font-geneva-12 text-[11px] text-black">
@@ -418,30 +416,14 @@ function SignOnScreen({ onSignOn }: { onSignOn: () => void }) {
               <div className="mt-1 text-[12px]">Version 5.0 for Windows 98</div>
             </div>
           </div>
-          <label className="mb-2 grid grid-cols-[96px_1fr] items-center gap-2">
+          <label className="mb-3 grid grid-cols-[96px_1fr] items-center gap-2">
             <span>Member Name:</span>
             <input
               className="h-6 border border-[#808080] bg-white px-1 shadow-[inset_1px_1px_#000]"
               value={memberName}
+              autoComplete="username"
               onChange={(event) => setMemberName(event.target.value)}
             />
-          </label>
-          <label className="mb-2 grid grid-cols-[96px_1fr] items-center gap-2">
-            <span>Password:</span>
-            <input
-              className="h-6 border border-[#808080] bg-white px-1 shadow-[inset_1px_1px_#000]"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-            />
-          </label>
-          <label className="mb-3 ml-[104px] flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={savePassword}
-              onChange={(event) => setSavePassword(event.target.checked)}
-            />
-            Save password
           </label>
           <div className="flex items-center justify-between">
             <button className={winButton}>Setup...</button>
@@ -450,7 +432,7 @@ function SignOnScreen({ onSignOn }: { onSignOn: () => void }) {
               <button
                 className={`${winButton} min-w-20 font-bold`}
                 onClick={onSignOn}
-                disabled={!memberName || !password}
+                disabled={!memberName.trim()}
               >
                 Sign On
               </button>

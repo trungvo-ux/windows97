@@ -101,20 +101,6 @@ async function loadDefaultFiles(): Promise<FileSystemData> {
   }
 }
 
-// Function to load default applets from JSON
-async function loadDefaultApplets(): Promise<{
-  applets: FileSystemItemData[];
-}> {
-  try {
-    const res = await fetch("/data/applets.json");
-    const data = await res.json();
-    return { applets: data.applets || [] };
-  } catch (err) {
-    console.error("Failed to load applets.json", err);
-    return { applets: [] };
-  }
-}
-
 // Helper function to get parent path
 const getParentPath = (path: string): string => {
   if (path === "/") return "/";
@@ -193,7 +179,7 @@ async function saveDefaultContents(
 // Function to generate an empty initial state (just for typing)
 const getEmptyFileSystemState = (): Record<string, FileSystemItem> => ({});
 
-const STORE_VERSION = 10; // Update Applets folder icon
+const STORE_VERSION = 12; // Remove Quick Tips.md from Documents
 const STORE_NAME = "trungvos:files";
 
 const initialFilesData: FilesStoreState = {
@@ -723,7 +709,6 @@ export const useFilesStore = create<FilesStoreState>()(
         // Only initialize if the library is in uninitialized state
         if (current.libraryState === "uninitialized") {
           const data = await loadDefaultFiles();
-          const appletsData = await loadDefaultApplets();
           const newItems: Record<string, FileSystemItem> = {};
           const now = Date.now();
 
@@ -749,26 +734,12 @@ export const useFilesStore = create<FilesStoreState>()(
             };
           });
 
-          // Add applets
-          appletsData.applets.forEach((applet) => {
-            newItems[applet.path] = {
-              ...applet,
-              status: "active",
-              // Generate UUID for applets
-              uuid: uuidv4(),
-              createdAt: now,
-              modifiedAt: now,
-            };
-          });
-
           set({
             items: newItems,
             libraryState: "loaded",
           });
 
-          // Save default contents for both files and applets
           await saveDefaultContents(data.files, newItems);
-          await saveDefaultContents(appletsData.applets, newItems);
         }
         get().purgeRemovedAppAliases();
       },
@@ -932,6 +903,46 @@ export const useFilesStore = create<FilesStoreState>()(
           // but we bump it to trigger the one-time sync in useFileSystem
           // which will calculate actual file sizes and set proper timestamps
           return persistedState;
+        }
+
+        if (version < 11) {
+          const oldState = persistedState as {
+            items: Record<string, FileSystemItem>;
+            libraryState?: LibraryState;
+          };
+          const newState: Record<string, FileSystemItem> = {};
+
+          for (const path in oldState.items) {
+            if (path === "/Applets" || path.startsWith("/Applets/")) {
+              continue;
+            }
+            newState[path] = oldState.items[path];
+          }
+
+          return {
+            items: newState,
+            libraryState: oldState.libraryState || "loaded",
+          };
+        }
+
+        if (version < 12) {
+          const oldState = persistedState as {
+            items: Record<string, FileSystemItem>;
+            libraryState?: LibraryState;
+          };
+          const newState: Record<string, FileSystemItem> = {};
+
+          for (const path in oldState.items) {
+            if (path === "/Documents/Quick Tips.md") {
+              continue;
+            }
+            newState[path] = oldState.items[path];
+          }
+
+          return {
+            items: newState,
+            libraryState: oldState.libraryState || "loaded",
+          };
         }
 
         return persistedState;

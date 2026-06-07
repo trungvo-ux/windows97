@@ -2,8 +2,9 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { Sounds, useSound } from "@/hooks/useSound";
 import { getAudioContext, resumeAudioContext } from "@/lib/audioContext";
 import { useAppStore } from "@/stores/useAppStore";
+import { Windows98BootSignOn } from "./Windows98BootSignOn";
 
-type BootPhase = "bios" | "splash" | "desktop" | "done";
+type BootPhase = "bios" | "splash" | "signon" | "desktop" | "done";
 
 const BIOS_DURATION_MS = 1500;
 const SPLASH_DURATION_MS = 2000;
@@ -148,22 +149,31 @@ export function Windows98BootSequence({ onComplete }: Windows98BootSequenceProps
     }
   }, [masterVolume, playBootSound, uiSoundsEnabled, uiVolume]);
 
+  const completeBoot = useCallback(() => {
+    setPhase("desktop");
+
+    window.setTimeout(() => {
+      setPhase("done");
+      onComplete();
+    }, DESKTOP_FADE_MS);
+  }, [onComplete]);
+
+  const handleSignIn = useCallback(() => {
+    void playStartupSound();
+    completeBoot();
+  }, [completeBoot, playStartupSound]);
+
   useEffect(() => {
     const splashAt = BIOS_DURATION_MS;
-    const desktopAt = BIOS_DURATION_MS + SPLASH_DURATION_MS;
-    const doneAt = desktopAt + DESKTOP_FADE_MS;
+    const signonAt = BIOS_DURATION_MS + SPLASH_DURATION_MS;
 
     const phaseTimers = [
       window.setTimeout(() => setPhase("splash"), splashAt),
-      window.setTimeout(() => setPhase("desktop"), desktopAt),
-      window.setTimeout(() => {
-        setPhase("done");
-        onComplete();
-      }, doneAt),
+      window.setTimeout(() => setPhase("signon"), signonAt),
     ];
 
     return () => phaseTimers.forEach(clearTimeout);
-  }, [onComplete]);
+  }, []);
 
   useEffect(() => {
     if (phase !== "bios") return;
@@ -186,12 +196,6 @@ export function Windows98BootSequence({ onComplete }: Windows98BootSequenceProps
 
     return () => clearInterval(interval);
   }, [phase]);
-
-  useEffect(() => {
-    if (phase !== "desktop") return;
-
-    void playStartupSound();
-  }, [phase, playStartupSound]);
 
   if (phase === "done") return null;
 
@@ -233,6 +237,8 @@ export function Windows98BootSequence({ onComplete }: Windows98BootSequenceProps
           </div>
         </div>
       )}
+
+      {phase === "signon" && <Windows98BootSignOn onSignIn={handleSignIn} />}
 
       {phase === "desktop" && (
         <div className="win98-boot__desktop">

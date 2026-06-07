@@ -789,6 +789,11 @@ button.piano-key.piano-key[class*="bg-[#ff33ff]"] {
     no-repeat;
 }
 
+.win98-boot--signon {
+  background: #008080;
+  font-family: "MS Sans Serif", "Pixelated MS Sans Serif", Tahoma, sans-serif;
+}
+
 .win98-boot--desktop {
   background: #008080;
   animation: win98-boot-fade-out 1s linear forwards;
@@ -873,6 +878,43 @@ button.piano-key.piano-key[class*="bg-[#ff33ff]"] {
   /* Match the ~8% dark blue band in win98-boot-splash.png (640×400) */
   min-height: 8vh;
   padding: 0;
+}
+
+.win98-boot__signon {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  height: 100%;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+
+.win98-boot__signon-form {
+  animation: win98-boot-signon-fade-in 0.4s ease-out;
+}
+
+/* Override 98-custom.css label/input rules (loaded after Tailwind utilities). */
+.win98-boot__signon label {
+  display: flex !important;
+  flex-direction: column;
+  align-items: flex-start !important;
+  text-align: left;
+}
+
+.win98-boot__signon input[type="text"],
+.win98-boot__signon input[type="password"] {
+  text-align: left !important;
+  line-height: normal !important;
+}
+
+@keyframes win98-boot-signon-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .win98-boot__status {

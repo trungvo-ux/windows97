@@ -51,7 +51,7 @@ export function App() {
   }, [isFirstBoot, setHasBooted]);
 
   useEffect(() => {
-    if (!showWin98Boot || showBootScreen) return;
+    if (showWin98Boot || showBootScreen) return;
 
     const launchTimer = window.setTimeout(() => {
       window.dispatchEvent(
@@ -62,7 +62,7 @@ export function App() {
           },
         })
       );
-    }, 6000);
+    }, 1500);
 
     return () => clearTimeout(launchTimer);
   }, [showWin98Boot, showBootScreen]);
